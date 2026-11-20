@@ -1,265 +1,271 @@
 import React, { useState } from 'react';
 import {
-  Settings,
-  PlayCircle,
-  AlertTriangle,
-  Wrench,
-  Package,
-  ClipboardList,
-  Activity,
-  ShieldCheck,
-  Gauge,
-} from 'lucide-react';
-import {
   ResponsiveContainer,
-  AreaChart,
+  ComposedChart,
   Area,
+  Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
 } from 'recharts';
 
-const kpiCards = [
-  {
-    id: 1,
-    title: 'Total Machines',
-    value: '24',
-    support: '4 Molding Lines',
-    icon: Settings,
-    iconBg: 'bg-[#eef4ff] text-[#0b57d0]',
-  },
-  {
-    id: 2,
-    title: 'Running Machines',
-    value: '18',
-    support: '75.0% Availability',
-    icon: PlayCircle,
-    iconBg: 'bg-[#e8f8ef] text-[#16a34a]',
-  },
-  {
-    id: 3,
-    title: 'Under Breakdown',
-    value: '2',
-    support: '1 Critical • 1 Repair',
-    icon: AlertTriangle,
-    iconBg: 'bg-[#feeceb] text-[#dc2626]',
-  },
-  {
-    id: 4,
-    title: 'Under Scheduled PM',
-    value: '2',
-    support: 'Est. done 18:00 hrs',
-    icon: Wrench,
-    iconBg: 'bg-[#fff4e5] text-[#ea580c]',
-  },
+const machineProductionChartData = [
+  { name: 'IMM-01', Target: 2400, Actual: 2310 },
+  { name: 'IMM-02', Target: 2800, Actual: 2690 },
+  { name: 'IMM-03', Target: 3200, Actual: 3120 },
+  { name: 'IMM-04', Target: 2000, Actual: 1490 },
+  { name: 'IMM-05', Target: 1800, Actual: 1715 },
+  { name: 'IMM-06', Target: 1200, Actual: 1145 },
+  { name: 'IMM-07', Target: 1600, Actual: 1505 },
+  { name: 'IMM-08', Target: 2600, Actual: 2180 },
+  { name: 'IMM-09', Target: 3000, Actual: 2910 },
+  { name: 'IMM-10', Target: 2200, Actual: 2105 },
 ];
 
-const machineStatusData = [
-  { id: 'IMM-01', name: 'Toshiba 180T Injection', line: 'Line A - Automotive', status: 'Running' },
-  { id: 'IMM-02', name: 'Sumitomo 220T High-Speed', line: 'Line A - Automotive', status: 'Under Scheduled PM' },
-  { id: 'IMM-03', name: 'Fanuc Roboshot 150T', line: 'Line A - Automotive', status: 'Running' },
-  { id: 'IMM-04', name: 'Toshiba 250T Servo', line: 'Line B - Interior Trim', status: 'Under Breakdown' },
-  { id: 'IMM-05', name: 'Nissei 350T Precision', line: 'Line B - Interior Trim', status: 'Running' },
-  { id: 'IMM-06', name: 'JSW 450T Heavy Mold', line: 'Line C - Bumper Line', status: 'Running' },
-  { id: 'IMM-07', name: 'Engel 300T Duo', line: 'Line C - Bumper Line', status: 'Idle' },
-  { id: 'IMM-08', name: 'Sumitomo 180T Electric', line: 'Line D - Precision Gear', status: 'Under Breakdown' },
-  { id: 'IMM-09', name: 'Fanuc Roboshot 100T', line: 'Line D - Precision Gear', status: 'Under Scheduled PM' },
-  { id: 'IMM-10', name: 'Toshiba 350T Hydraulic', line: 'Line D - Precision Gear', status: 'Running' },
+const shiftComparisonData = [
+  { shift: 'Shift A', Actual: 7635, Rejected: 108 },
+  { shift: 'Shift B', Actual: 7015, Rejected: 87 },
+  { shift: 'Shift C', Actual: 6520, Rejected: 54 },
 ];
 
-const productionChartData = [
-  { time: '08:00', Target: 4400, Actual: 4200 },
-  { time: '09:00', Target: 6800, Actual: 6300 },
-  { time: '10:00', Target: 9200, Actual: 8400 },
-  { time: '11:00', Target: 10800, Actual: 9500 },
-  { time: '12:00', Target: 11800, Actual: 10600 },
-  { time: '13:00', Target: 13500, Actual: 11800 },
-  { time: '14:00', Target: 14200, Actual: 12900 },
-  { time: '15:00', Target: 15000, Actual: 13200 },
-  { time: '16:00', Target: 15600, Actual: 14100 },
-  { time: '17:00', Target: 16000, Actual: 14820 },
-];
-
-const activeBreakdownsData = [
-  {
-    machineId: 'IMM-04',
-    machineName: 'Toshiba 250T Servo',
-    startTime: '10:15 AM (2h 20m)',
-    faultCategory: 'Hydraulic Pressure Drop',
-    technician: 'Suresh Nair',
-    status: 'Under Repair',
-  },
-  {
-    machineId: 'IMM-08',
-    machineName: 'Sumitomo 180T Electric',
-    startTime: '11:40 AM (55m)',
-    faultCategory: 'Heater Zone-2 Thermocouple Fault',
-    technician: 'Vikram Singh',
-    status: 'Awaiting Spare',
-  },
-  {
-    machineId: 'AUX-12',
-    machineName: 'MTC-04 Mold Temp Controller',
-    startTime: '12:05 PM (30m)',
-    faultCategory: 'Coolant Flow Sensor Alarm',
-    technician: 'Amit Verma',
-    status: 'Assigned',
-  },
-];
-
-const upcomingPmData = [
-  {
-    id: 'PM-401',
-    machineName: 'IMM-02 (Sumitomo 220T)',
-    pmType: 'Monthly',
-    dueDate: 'Today, 04:00 PM',
-    engineer: 'Karan Mehta',
-    status: 'Due Today',
-  },
-  {
-    id: 'PM-402',
-    machineName: 'IMM-06 (JSW 450T Heavy Mold)',
-    pmType: 'Cycle-based (50k Shots)',
-    dueDate: 'Yesterday',
-    engineer: 'Rohan Sharma',
-    status: 'Overdue',
-  },
-  {
-    id: 'PM-403',
-    machineName: 'IMM-01 (Toshiba 180T)',
-    pmType: 'Daily',
-    dueDate: 'Today, 06:00 PM',
-    engineer: 'Deepak Patel',
-    status: 'Due Today',
-  },
-  {
-    id: 'PM-404',
-    machineName: 'IMM-05 (Nissei 350T Precision)',
-    pmType: 'Weekly',
-    dueDate: 'Tomorrow, 09:00 AM',
-    engineer: 'Karan Mehta',
-    status: 'Upcoming',
-  },
-];
-
-const statusBadgeStyle = (status) => {
-  switch (status) {
-    case 'Running':
-      return 'bg-[#e8f8ef] text-[#15803d]';
-    case 'Under Breakdown':
-      return 'bg-[#feeceb] text-[#b91c1c]';
-    case 'Under Scheduled PM':
-      return 'bg-[#fff4e5] text-[#c2410c]';
-    case 'Idle':
-      return 'bg-[#f1f5f9] text-[#475569]';
-    default:
-      return 'bg-[#eef4ff] text-[#0b57d0]';
-  }
+// ============================================================================
+// Temporary Sample Data for Additional Analytics (Ready for Future API Integration)
+// ============================================================================
+const SAMPLE_PRODUCTION_TREND = {
+  '7d': [
+    { date: '14 Nov', ActualGood: 19450, Rejected: 210 },
+    { date: '15 Nov', ActualGood: 20120, Rejected: 185 },
+    { date: '16 Nov', ActualGood: 18940, Rejected: 260 },
+    { date: '17 Nov', ActualGood: 21300, Rejected: 175 },
+    { date: '18 Nov', ActualGood: 20880, Rejected: 192 },
+    { date: '19 Nov', ActualGood: 21640, Rejected: 164 },
+    { date: '20 Nov', ActualGood: 21170, Rejected: 249 },
+  ],
+  '30d': [
+    { date: '25 Oct', ActualGood: 18600, Rejected: 230 },
+    { date: '29 Oct', ActualGood: 19250, Rejected: 215 },
+    { date: '02 Nov', ActualGood: 20400, Rejected: 190 },
+    { date: '06 Nov', ActualGood: 19850, Rejected: 240 },
+    { date: '10 Nov', ActualGood: 21100, Rejected: 178 },
+    { date: '14 Nov', ActualGood: 19450, Rejected: 210 },
+    { date: '17 Nov', ActualGood: 21300, Rejected: 175 },
+    { date: '20 Nov', ActualGood: 21170, Rejected: 249 },
+  ],
+  month: [
+    { date: '01 Nov', ActualGood: 19800, Rejected: 195 },
+    { date: '04 Nov', ActualGood: 20540, Rejected: 182 },
+    { date: '07 Nov', ActualGood: 19120, Rejected: 245 },
+    { date: '10 Nov', ActualGood: 21100, Rejected: 178 },
+    { date: '13 Nov', ActualGood: 20750, Rejected: 190 },
+    { date: '16 Nov', ActualGood: 18940, Rejected: 260 },
+    { date: '20 Nov', ActualGood: 21170, Rejected: 249 },
+  ],
 };
 
-const statusDotStyle = (status) => {
-  switch (status) {
-    case 'Running':
-      return 'bg-[#16a34a]';
-    case 'Under Breakdown':
-      return 'bg-[#dc2626]';
-    case 'Under Scheduled PM':
-      return 'bg-[#ea580c]';
-    default:
-      return 'bg-[#94a3b8]';
-  }
+const SAMPLE_MACHINE_STATUS = [
+  { status: 'Running' },
+  { status: 'Running' },
+  { status: 'Running' },
+  { status: 'Running' },
+  { status: 'Running' },
+  { status: 'Idle' },
+  { status: 'Under Maintenance' },
+  { status: 'Under Maintenance' },
+  { status: 'Breakdown' },
+  { status: 'Breakdown' },
+];
+
+const SAMPLE_PM_MONTHLY_TREND = [
+  { month: 'Jun', Scheduled: 24, Completed: 22, Pending: 2 },
+  { month: 'Jul', Scheduled: 26, Completed: 25, Pending: 1 },
+  { month: 'Aug', Scheduled: 28, Completed: 24, Pending: 4 },
+  { month: 'Sep', Scheduled: 25, Completed: 23, Pending: 2 },
+  { month: 'Oct', Scheduled: 30, Completed: 28, Pending: 2 },
+  { month: 'Nov', Scheduled: 27, Completed: 21, Pending: 6 },
+];
+
+const SAMPLE_LOW_STOCK_PARTS = [
+  { partCode: 'SP-512', description: 'Proportional Pressure Relief Solenoid Coil 24V', availableStock: 0, minThreshold: 2 },
+  { partCode: 'SP-215', description: 'Synthetic High-Temp Toggle Grease Cartridge', availableStock: 4, minThreshold: 5 },
+  { partCode: 'SP-108', description: 'Ceramic Barrel Heater Band 240V', availableStock: 3, minThreshold: 4 },
+  { partCode: 'SP-302', description: 'K-Type Barrel Thermocouple Sensor Probe', availableStock: 2, minThreshold: 4 },
+];
+
+// Executive Industrial Color Palette
+const CHART_COLORS = {
+  primary: '#1d4ed8',
+  primarySoft: '#3b82f6',
+  baseline: '#e2e8f0',
+  slateMuted: '#94a3b8',
+  emerald: '#059669',
+  amber: '#d97706',
+  rose: '#e11d48',
 };
 
-const pmBadgeStyle = (status) => {
-  switch (status) {
-    case 'Overdue':
-      return 'bg-[#feeceb] text-[#b91c1c]';
-    case 'Due Today':
-      return 'bg-[#fff4e5] text-[#c2410c]';
-    case 'Upcoming':
-      return 'bg-[#eef4ff] text-[#0b57d0]';
-    default:
-      return 'bg-[#f1f5f9] text-[#475569]';
-  }
+const AXIS_TICK_STYLE = {
+  fill: '#64748b',
+  fontSize: 11,
+  fontWeight: 500,
 };
 
-const Dashboard = () => {
-  const [dateFilter, setDateFilter] = useState('today');
-  const [machineFilter, setMachineFilter] = useState('All');
+const loadRegisteredMachines = () => {
+  try {
+    const saved = localStorage.getItem('sanko_gosei_machines_v1');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    // Fallback to temporary sample data
+  }
+  return SAMPLE_MACHINE_STATUS;
+};
 
-  const filteredMachines = machineStatusData.filter(
-    (m) => machineFilter === 'All' || m.status === machineFilter
+// Compact Inline Legend for Card Headers
+const InlineLegend = ({ items }) => (
+  <div className="flex flex-wrap items-center gap-4 text-[11.5px] font-medium text-[#475569]">
+    {items.map((item) => (
+      <span key={item.label} className="inline-flex items-center gap-1.5">
+        <span
+          className={`shrink-0 ${
+            item.dashed ? 'w-3.5 border-t-2 border-dashed' : 'w-2.5 h-2.5 rounded-xs'
+          }`}
+          style={
+            item.dashed
+              ? { borderColor: item.color }
+              : { backgroundColor: item.color }
+          }
+        />
+        <span>{item.label}</span>
+      </span>
+    ))}
+  </div>
+);
+
+const Dashboard = ({ pmTasks = [], spareParts = [] }) => {
+  const [trendRange, setTrendRange] = useState('7d');
+
+  const totalMachineTarget = machineProductionChartData.reduce((s, r) => s + r.Target, 0);
+  const totalMachineActual = machineProductionChartData.reduce((s, r) => s + r.Actual, 0);
+  const overallAchievement =
+    totalMachineTarget > 0
+      ? ((totalMachineActual / totalMachineTarget) * 100).toFixed(1)
+      : '0.0';
+
+  // 1. Production Trend Analysis
+  const trendData = SAMPLE_PRODUCTION_TREND[trendRange] || SAMPLE_PRODUCTION_TREND['7d'];
+
+  // 2. Machine Status Overview (uses saved machines from Machine Status if available)
+  const registeredMachines = loadRegisteredMachines();
+  const machineStatusCounts = registeredMachines.reduce(
+    (acc, m) => {
+      const st = (m.status || '').toLowerCase();
+      if (st.includes('breakdown')) acc.Breakdown += 1;
+      else if (st.includes('pm') || st.includes('maintenance')) acc['Under Maintenance'] += 1;
+      else if (st.includes('idle')) acc.Idle += 1;
+      else acc.Running += 1;
+      return acc;
+    },
+    { Running: 0, Idle: 0, 'Under Maintenance': 0, Breakdown: 0 }
   );
+  const totalMachinesCount = registeredMachines.length || 1;
+  const machineStatusDonutData = [
+    { name: 'Running', value: machineStatusCounts.Running, color: CHART_COLORS.emerald },
+    { name: 'Idle', value: machineStatusCounts.Idle, color: CHART_COLORS.slateMuted },
+    { name: 'Under Maintenance', value: machineStatusCounts['Under Maintenance'], color: CHART_COLORS.amber },
+    { name: 'Breakdown', value: machineStatusCounts.Breakdown, color: CHART_COLORS.rose },
+  ];
 
-  // Donut Ring SVG math for 89.4% OEE
-  const oeePercent = 89.4;
-  const radius = 58;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (oeePercent / 100) * circumference;
+  // 3. Preventive Maintenance Status (uses live pmTasks prop from App state)
+  const pmStatusCounts = pmTasks.reduce(
+    (acc, t) => {
+      if (acc[t.status] !== undefined) acc[t.status] += 1;
+      return acc;
+    },
+    { Upcoming: 0, 'Due Today': 0, Overdue: 0, Completed: 0 }
+  );
+  const totalPmCount = pmTasks.length || 1;
+  const pmStatusDonutData = [
+    { name: 'Upcoming', value: pmStatusCounts.Upcoming, color: CHART_COLORS.primary },
+    { name: 'Due Today', value: pmStatusCounts['Due Today'], color: CHART_COLORS.amber },
+    { name: 'Overdue', value: pmStatusCounts.Overdue, color: CHART_COLORS.rose },
+    { name: 'Completed', value: pmStatusCounts.Completed, color: CHART_COLORS.emerald },
+  ];
+
+  // 4. Spare Parts Stock Status (uses live spareParts prop from App state)
+  const stockCounts = spareParts.reduce(
+    (acc, p) => {
+      const avail = Number(p.availableStock);
+      const min = Number(p.minThreshold);
+      if (avail <= 0) acc['Out of Stock'] += 1;
+      else if (avail < min) acc['Low Stock'] += 1;
+      else acc['In Stock'] += 1;
+      return acc;
+    },
+    { 'In Stock': 0, 'Low Stock': 0, 'Out of Stock': 0 }
+  );
+  const totalSparePartsCount = spareParts.length || 1;
+  const sparePartsDonutData = [
+    { name: 'In Stock', value: stockCounts['In Stock'], color: CHART_COLORS.emerald },
+    { name: 'Low Stock', value: stockCounts['Low Stock'], color: CHART_COLORS.amber },
+    { name: 'Out of Stock', value: stockCounts['Out of Stock'], color: CHART_COLORS.rose },
+  ];
+
+  // 5. Top Low Stock Spare Parts (uses live spareParts below threshold, falls back to sample)
+  const liveLowStock = spareParts
+    .filter((p) => Number(p.availableStock) < Number(p.minThreshold))
+    .sort((a, b) => Number(a.availableStock) - Number(b.availableStock));
+  const lowStockChartData = (
+    liveLowStock.length > 0 ? liveLowStock : SAMPLE_LOW_STOCK_PARTS
+  ).map((p) => ({
+    partCode: p.partCode,
+    description: p.description,
+    Available: Number(p.availableStock),
+    MinReorder: Number(p.minThreshold),
+    isOutOfStock: Number(p.availableStock) <= 0,
+  }));
 
   return (
     <div className="space-y-5">
-      {/* Horizontal KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {kpiCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              {/* Left Rounded Square Tinted Icon Badge */}
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
+      {/* Graph 1: Production Trend Analysis (Full Width) */}
+      <section className="bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 mb-5 border-b border-[#f1f5f9]">
+          <div>
+            <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+              Production Trend Analysis
+            </h3>
+            <p className="text-xs text-[#64748b] mt-0.5">
+              Daily output volume of Actual Good Parts vs Rejected Parts
+            </p>
+          </div>
 
-              {/* Right Title + Large Bold Metric + Subtle Support */}
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
+          <div className="flex flex-wrap items-center gap-4">
+            <InlineLegend
+              items={[
+                { label: 'Actual Good Parts', color: CHART_COLORS.primary },
+                { label: 'Rejected Parts', color: CHART_COLORS.rose, dashed: true },
+              ]}
+            />
 
-      {/* Production Overview Chart + OEE Donut Card */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-        {/* Left: Production Overview Area Chart (7 cols) */}
-        <section className="xl:col-span-7 bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">Production Overview</h3>
-              <p className="text-xs font-medium text-[#64748b] mt-0.5">
-                Target vs Actual hourly parts production
-              </p>
-            </div>
-
-            {/* Segmented Date Tabs */}
-            <div className="inline-flex items-center bg-[#f3f6fb] p-1 rounded-xl self-start sm:self-auto">
+            <div className="inline-flex items-center bg-[#f1f5f9] p-0.5 rounded-lg border border-[#e2e8f0]/80">
               {[
-                { key: 'today', label: 'Today' },
-                { key: 'week', label: 'This Week' },
+                { key: '7d', label: 'Last 7 Days' },
+                { key: '30d', label: 'Last 30 Days' },
                 { key: 'month', label: 'This Month' },
               ].map((tab) => (
                 <button
                   key={tab.key}
                   type="button"
-                  onClick={() => setDateFilter(tab.key)}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    dateFilter === tab.key
-                      ? 'bg-[#0b57d0] text-white shadow-xs'
-                      : 'text-[#475569] hover:text-[#0f172a]'
+                  onClick={() => setTrendRange(tab.key)}
+                  className={`px-3 py-1.5 rounded-md text-[11.5px] font-semibold transition-all cursor-pointer ${
+                    trendRange === tab.key
+                      ? 'bg-white text-[#0f172a] shadow-[0_1px_2px_rgba(15,23,42,0.08)]'
+                      : 'text-[#64748b] hover:text-[#0f172a]'
                   }`}
                 >
                   {tab.label}
@@ -267,359 +273,569 @@ const Dashboard = () => {
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Smooth Area / Line Chart */}
+        <div className="h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart
+              data={trendData}
+              margin={{ top: 8, right: 8, left: -12, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="trendGoodFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.14} />
+                  <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="#f1f5f9" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={AXIS_TICK_STYLE}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={false}
+                dy={6}
+              />
+              <YAxis
+                yAxisId="left"
+                tickFormatter={(v) => (v === 0 ? '0' : `${(v / 1000).toFixed(0)}k`)}
+                tick={AXIS_TICK_STYLE}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                yAxisId="right"
+                orientation="right"
+                tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Area
+                yAxisId="left"
+                type="monotone"
+                dataKey="ActualGood"
+                name="Actual Good Parts"
+                stroke={CHART_COLORS.primary}
+                strokeWidth={2}
+                fill="url(#trendGoodFill)"
+                dot={false}
+                activeDot={false}
+              />
+              <Line
+                yAxisId="right"
+                type="monotone"
+                dataKey="Rejected"
+                name="Rejected Parts"
+                stroke={CHART_COLORS.rose}
+                strokeWidth={1.75}
+                strokeDasharray="4 4"
+                dot={false}
+                activeDot={false}
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
+
+      {/* Graphs 2 & 3: Machine-wise Target vs Actual & Shift Performance */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        {/* Target Production vs Actual Good Parts (7 cols) */}
+        <section className="xl:col-span-7 bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 mb-5 border-b border-[#f1f5f9]">
+            <div>
+              <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+                Target Production vs Actual Good Parts
+              </h3>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Machine-wise output comparison across molding lines
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <InlineLegend
+                items={[
+                  { label: 'Target', color: CHART_COLORS.baseline },
+                  { label: 'Actual', color: CHART_COLORS.primary },
+                ]}
+              />
+              <span className="px-2.5 py-1 rounded-md bg-[#f1f5f9] border border-[#e2e8f0] text-[#0f172a] text-[11px] font-semibold tabular-nums">
+                {overallAchievement}% Achieved
+              </span>
+            </div>
+          </div>
+
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={productionChartData}
-                margin={{ top: 10, right: 15, left: -10, bottom: 0 }}
+              <BarChart
+                data={machineProductionChartData}
+                barGap={4}
+                margin={{ top: 4, right: 6, left: -12, bottom: 0 }}
               >
-                <defs>
-                  <linearGradient id="actualGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0b57d0" stopOpacity={0.24} />
-                    <stop offset="95%" stopColor="#0b57d0" stopOpacity={0.01} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <CartesianGrid stroke="#f1f5f9" vertical={false} />
                 <XAxis
-                  dataKey="time"
-                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                  dataKey="name"
+                  tick={AXIS_TICK_STYLE}
                   axisLine={{ stroke: '#e2e8f0' }}
                   tickLine={false}
+                  dy={6}
                 />
                 <YAxis
-                  tickFormatter={(v) => (v === 0 ? '0' : `${v / 1000}K`)}
-                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 500 }}
+                  tickFormatter={(v) => (v === 0 ? '0' : `${(v / 1000).toFixed(1)}k`)}
+                  tick={AXIS_TICK_STYLE}
                   axisLine={false}
                   tickLine={false}
                 />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    borderColor: '#edf1f7',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px rgba(15,23,42,0.1)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                />
-                <Area
-                  type="monotone"
+                <Bar
                   dataKey="Target"
-                  name="Target Production"
-                  stroke="#94a3b8"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                  fill="none"
-                  dot={false}
+                  name="Target Output"
+                  fill={CHART_COLORS.baseline}
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
                 />
-                <Area
-                  type="monotone"
+                <Bar
                   dataKey="Actual"
-                  name="Actual Production"
-                  stroke="#0b57d0"
-                  strokeWidth={2.5}
-                  fillOpacity={1}
-                  fill="url(#actualGradient)"
-                  dot={{ r: 4, fill: '#ffffff', stroke: '#0b57d0', strokeWidth: 2.5 }}
-                  activeDot={{ r: 6, fill: '#0b57d0', stroke: '#ffffff', strokeWidth: 2 }}
+                  name="Actual Good Parts"
+                  fill={CHART_COLORS.primary}
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
                 />
-              </AreaChart>
+              </BarChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Custom Legend + 4 Production Metrics Footer */}
-          <div className="mt-4 pt-4 border-t border-[#f1f5f9] flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-6 text-xs font-semibold text-[#475569]">
-              <div className="flex items-center gap-2">
-                <span className="w-3.5 h-2 rounded-full bg-[#0b57d0]" />
-                <span>Actual Good Parts: <strong className="text-[#0f172a]">14,820 pcs</strong></span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 border-t-2 border-dashed border-[#94a3b8]" />
-                <span>Target Production: <strong className="text-[#0f172a]">16,000 pcs</strong></span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4 text-xs font-semibold">
-              <span className="px-2.5 py-1 rounded-lg bg-[#feeceb] text-[#b91c1c]">
-                Rejected: 142 pcs (0.95%)
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-[#eef4ff] text-[#0b57d0]">
-                Cycle Count: 7,481 shots
-              </span>
-            </div>
           </div>
         </section>
 
-        {/* Right: Overall Equipment Effectiveness (OEE) Card (5 cols) */}
-        <section className="xl:col-span-5 bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
-          <div>
-            <h3 className="text-lg font-extrabold text-[#0f172a]">
-              Overall Equipment Effectiveness (OEE)
-            </h3>
-            <p className="text-xs font-medium text-[#64748b] mt-0.5">Current Performance</p>
+        {/* Shift Performance & Rejected Parts (5 cols) */}
+        <section className="xl:col-span-5 bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 mb-5 border-b border-[#f1f5f9]">
+            <div>
+              <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+                Shift Performance &amp; Rejected Parts
+              </h3>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Good output and scrap across Shift A, B, and C
+              </p>
+            </div>
+            <InlineLegend
+              items={[
+                { label: 'Good', color: CHART_COLORS.emerald },
+                { label: 'Rejected', color: CHART_COLORS.rose },
+              ]}
+            />
           </div>
 
-          <div className="my-auto py-5 flex flex-col sm:flex-row items-center justify-between gap-6">
-            {/* Circular Donut Ring */}
-            <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
-                <circle
-                  cx="70"
-                  cy="70"
-                  r={radius}
-                  fill="none"
-                  stroke="#e2e8f0"
-                  strokeWidth="14"
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={shiftComparisonData}
+                barGap={8}
+                margin={{ top: 4, right: 6, left: -12, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="shift"
+                  tick={AXIS_TICK_STYLE}
+                  axisLine={{ stroke: '#e2e8f0' }}
+                  tickLine={false}
+                  dy={6}
                 />
-                <circle
-                  cx="70"
-                  cy="70"
-                  r={radius}
-                  fill="none"
-                  stroke="#0b57d0"
-                  strokeWidth="14"
-                  strokeLinecap="round"
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                <YAxis
+                  yAxisId="left"
+                  tickFormatter={(v) => (v === 0 ? '0' : `${(v / 1000).toFixed(0)}k`)}
+                  tick={AXIS_TICK_STYLE}
+                  axisLine={false}
+                  tickLine={false}
                 />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-2xl font-extrabold text-[#0f172a] tracking-tight">
-                  89.4%
-                </span>
-                <span className="text-xs font-semibold text-[#64748b] mt-0.5">OEE</span>
-              </div>
-            </div>
-
-            {/* 3 Pill Bars: Availability, Performance, Quality */}
-            <div className="w-full space-y-3">
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#f4f7fb]">
-                <div className="flex items-center gap-2.5">
-                  <Gauge className="w-4 h-4 text-[#0b57d0]" />
-                  <span className="text-xs font-semibold text-[#334155]">Availability</span>
-                </div>
-                <span className="text-sm font-extrabold text-[#0f172a]">95.2%</span>
-              </div>
-
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#f4f7fb]">
-                <div className="flex items-center gap-2.5">
-                  <Activity className="w-4 h-4 text-[#0b57d0]" />
-                  <span className="text-xs font-semibold text-[#334155]">Performance</span>
-                </div>
-                <span className="text-sm font-extrabold text-[#0f172a]">93.1%</span>
-              </div>
-
-              <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-[#f4f7fb]">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-4 h-4 text-[#0b57d0]" />
-                  <span className="text-xs font-semibold text-[#334155]">Quality</span>
-                </div>
-                <span className="text-sm font-extrabold text-[#0f172a]">99.0%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-[#f1f5f9] flex items-center justify-between text-xs text-[#64748b]">
-            <span>Shift A • Plant-1 Injection Molding</span>
-            <span className="font-bold text-[#16a34a]">+1.8% vs yesterday</span>
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 500 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Bar
+                  yAxisId="left"
+                  dataKey="Actual"
+                  name="Good Parts"
+                  fill={CHART_COLORS.emerald}
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
+                />
+                <Bar
+                  yAxisId="right"
+                  dataKey="Rejected"
+                  name="Rejected Parts"
+                  fill={CHART_COLORS.rose}
+                  radius={[4, 4, 0, 0]}
+                  barSize={20}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </section>
       </div>
 
-      {/* Machine Status Overview (Full Width) */}
-      <section className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-[#f1f5f9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-extrabold text-[#0f172a]">Machine Status Overview</h3>
-            <p className="text-xs font-medium text-[#64748b] mt-0.5">
-              Live operational status across injection molding lines
+      {/* Graphs 4, 5 & 6: Three Enterprise Donut Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Machine Status Overview */}
+        <section className="bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="pb-3 border-b border-[#f1f5f9]">
+            <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+              Machine Status Overview
+            </h3>
+            <p className="text-xs text-[#64748b] mt-0.5">
+              Distribution of registered molding machines
             </p>
           </div>
 
-          {/* Segmented Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5">
-            {['All', 'Running', 'Under Breakdown', 'Under Scheduled PM', 'Idle'].map((status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setMachineFilter(status)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  machineFilter === status
-                    ? 'bg-[#0b57d0] text-white shadow-xs'
-                    : 'bg-[#f3f6fb] text-[#475569] hover:text-[#0f172a]'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#f8fafc] border-b border-[#f1f5f9] text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                <th className="py-3.5 px-6">Machine ID</th>
-                <th className="py-3.5 px-6">Machine Name</th>
-                <th className="py-3.5 px-6">Production Line</th>
-                <th className="py-3.5 px-6">Current Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#f1f5f9] text-[13.5px]">
-              {filteredMachines.map((machine) => (
-                <tr key={machine.id} className="hover:bg-[#f8fafc]/80 transition-colors">
-                  <td className="py-3.5 px-6 font-bold text-[#0b57d0] whitespace-nowrap">
-                    {machine.id}
-                  </td>
-                  <td className="py-3.5 px-6 font-semibold text-[#0f172a] whitespace-nowrap">
-                    {machine.name}
-                  </td>
-                  <td className="py-3.5 px-6 text-[#64748b] whitespace-nowrap">
-                    {machine.line}
-                  </td>
-                  <td className="py-3.5 px-6 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${statusBadgeStyle(
-                        machine.status
-                      )}`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${statusDotStyle(machine.status)}`}
-                      />
-                      {machine.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {filteredMachines.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="py-8 text-center text-sm text-[#64748b]">
-                    No machines match the selected filter.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Active Breakdowns & Upcoming Preventive Maintenance */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-        {/* Active Breakdowns (6 cols) */}
-        <section className="xl:col-span-6 bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] overflow-hidden">
-          <div className="p-6 border-b border-[#f1f5f9] flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">Active Breakdowns</h3>
-              <p className="text-xs font-medium text-[#64748b] mt-0.5">
-                Real-time breakdown tickets requiring immediate attention
-              </p>
+          <div className="relative h-52 w-full my-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={machineStatusDonutData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={62}
+                  outerRadius={76}
+                  paddingAngle={2}
+                  cornerRadius={3}
+                  stroke="none"
+                >
+                  {machineStatusDonutData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-[#0f172a] tabular-nums">
+                {registeredMachines.length}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#64748b] mt-0.5">
+                Total Units
+              </span>
             </div>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#feeceb] text-[#b91c1c]">
-              {activeBreakdownsData.length} Active
-            </span>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#f8fafc] border-b border-[#f1f5f9] text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                  <th className="py-3.5 px-5">Machine</th>
-                  <th className="py-3.5 px-5">Start Time</th>
-                  <th className="py-3.5 px-5">Fault Category</th>
-                  <th className="py-3.5 px-5">Technician</th>
-                  <th className="py-3.5 px-5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                {activeBreakdownsData.map((bd) => (
-                  <tr key={bd.machineId} className="hover:bg-[#f8fafc]/80 transition-colors">
-                    <td className="py-3.5 px-5 whitespace-nowrap">
-                      <span className="font-bold text-[#dc2626] block">{bd.machineId}</span>
-                      <span className="text-xs text-[#64748b]">{bd.machineName}</span>
-                    </td>
-                    <td className="py-3.5 px-5 text-[#64748b] whitespace-nowrap">{bd.startTime}</td>
-                    <td className="py-3.5 px-5 font-semibold text-[#0f172a] whitespace-nowrap">
-                      {bd.faultCategory}
-                    </td>
-                    <td className="py-3.5 px-5 text-[#475569] font-medium whitespace-nowrap">
-                      {bd.technician}
-                    </td>
-                    <td className="py-3.5 px-5 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
-                          bd.status === 'Under Repair'
-                            ? 'bg-[#fff4e5] text-[#c2410c]'
-                            : bd.status === 'Awaiting Spare'
-                            ? 'bg-[#feeceb] text-[#b91c1c]'
-                            : 'bg-[#eef4ff] text-[#0b57d0]'
-                        }`}
-                      >
-                        {bd.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-2 pt-3 border-t border-[#f1f5f9] text-xs">
+            {machineStatusDonutData.map((item) => {
+              const pct = ((item.value / totalMachinesCount) * 100).toFixed(0);
+              return (
+                <div key={item.name} className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 text-[#475569] font-medium">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span>{item.name}</span>
+                  </span>
+                  <div className="flex items-center gap-2 tabular-nums">
+                    <span className="font-bold text-[#0f172a]">{item.value}</span>
+                    <span className="text-[11px] text-[#94a3b8] w-9 text-right">{pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* Upcoming Preventive Maintenance (6 cols) */}
-        <section className="xl:col-span-6 bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] overflow-hidden">
-          <div className="p-6 border-b border-[#f1f5f9] flex items-center justify-between gap-3">
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">
-                Upcoming Preventive Maintenance
-              </h3>
-              <p className="text-xs font-medium text-[#64748b] mt-0.5">
-                Scheduled daily, weekly, monthly, and cycle-based PM tasks
-              </p>
-            </div>
-            <span className="px-3 py-1 rounded-full bg-[#eef4ff] text-[#0b57d0] text-xs font-bold">
-              PM Schedule
-            </span>
+        {/* Preventive Maintenance Status */}
+        <section className="bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="pb-3 border-b border-[#f1f5f9]">
+            <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+              Preventive Maintenance Status
+            </h3>
+            <p className="text-xs text-[#64748b] mt-0.5">
+              Current breakdown of scheduled PM tasks
+            </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[#f8fafc] border-b border-[#f1f5f9] text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                  <th className="py-3.5 px-5">Machine Name</th>
-                  <th className="py-3.5 px-5">PM Type</th>
-                  <th className="py-3.5 px-5">Due Date</th>
-                  <th className="py-3.5 px-5">Engineer</th>
-                  <th className="py-3.5 px-5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                {upcomingPmData.map((pm) => (
-                  <tr key={pm.id} className="hover:bg-[#f8fafc]/80 transition-colors">
-                    <td className="py-3.5 px-5 font-semibold text-[#0f172a] whitespace-nowrap">
-                      {pm.machineName}
-                    </td>
-                    <td className="py-3.5 px-5 text-[#0b57d0] font-semibold whitespace-nowrap">
-                      {pm.pmType}
-                    </td>
-                    <td className="py-3.5 px-5 text-[#64748b] whitespace-nowrap">{pm.dueDate}</td>
-                    <td className="py-3.5 px-5 text-[#475569] font-medium whitespace-nowrap">
-                      {pm.engineer}
-                    </td>
-                    <td className="py-3.5 px-5 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${pmBadgeStyle(
-                          pm.status
-                        )}`}
-                      >
-                        {pm.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="relative h-52 w-full my-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pmStatusDonutData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={62}
+                  outerRadius={76}
+                  paddingAngle={2}
+                  cornerRadius={3}
+                  stroke="none"
+                >
+                  {pmStatusDonutData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-[#0f172a] tabular-nums">
+                {pmTasks.length}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#64748b] mt-0.5">
+                PM Tasks
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-3 border-t border-[#f1f5f9] text-xs">
+            {pmStatusDonutData.map((item) => {
+              const pct = ((item.value / totalPmCount) * 100).toFixed(0);
+              return (
+                <div key={item.name} className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 text-[#475569] font-medium">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span>{item.name}</span>
+                  </span>
+                  <div className="flex items-center gap-2 tabular-nums">
+                    <span className="font-bold text-[#0f172a]">{item.value}</span>
+                    <span className="text-[11px] text-[#94a3b8] w-9 text-right">{pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Spare Parts Stock Status */}
+        <section className="bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="pb-3 border-b border-[#f1f5f9]">
+            <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+              Spare Parts Stock Status
+            </h3>
+            <p className="text-xs text-[#64748b] mt-0.5">
+              Inventory health across maintenance store SKUs
+            </p>
+          </div>
+
+          <div className="relative h-52 w-full my-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={sparePartsDonutData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={62}
+                  outerRadius={76}
+                  paddingAngle={2}
+                  cornerRadius={3}
+                  stroke="none"
+                >
+                  {sparePartsDonutData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-2xl font-bold text-[#0f172a] tabular-nums">
+                {spareParts.length}
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#64748b] mt-0.5">
+                Total SKUs
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-3 border-t border-[#f1f5f9] text-xs">
+            {sparePartsDonutData.map((item) => {
+              const pct = ((item.value / totalSparePartsCount) * 100).toFixed(0);
+              return (
+                <div key={item.name} className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 text-[#475569] font-medium">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span>{item.name}</span>
+                  </span>
+                  <div className="flex items-center gap-2 tabular-nums">
+                    <span className="font-bold text-[#0f172a]">{item.value}</span>
+                    <span className="text-[11px] text-[#94a3b8] w-9 text-right">{pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+
+      {/* Graphs 7 & 8: PM Completion Trend & Top Low Stock Spare Parts */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+        {/* Preventive Maintenance Completion Trend (6 cols) */}
+        <section className="xl:col-span-6 bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 mb-5 border-b border-[#f1f5f9]">
+            <div>
+              <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+                Preventive Maintenance Completion Trend
+              </h3>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Monthly Scheduled, Completed, and Pending PM tasks
+              </p>
+            </div>
+            <InlineLegend
+              items={[
+                { label: 'Scheduled', color: '#cbd5e1' },
+                { label: 'Completed', color: CHART_COLORS.emerald },
+                { label: 'Pending', color: CHART_COLORS.amber },
+              ]}
+            />
+          </div>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={SAMPLE_PM_MONTHLY_TREND}
+                barGap={4}
+                margin={{ top: 4, right: 6, left: -16, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={AXIS_TICK_STYLE}
+                  axisLine={{ stroke: '#e2e8f0' }}
+                  tickLine={false}
+                  dy={6}
+                />
+                <YAxis
+                  tick={AXIS_TICK_STYLE}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Bar
+                  dataKey="Scheduled"
+                  name="Scheduled PM"
+                  fill="#cbd5e1"
+                  radius={[4, 4, 0, 0]}
+                  barSize={18}
+                />
+                <Bar
+                  dataKey="Completed"
+                  name="Completed PM"
+                  fill={CHART_COLORS.emerald}
+                  radius={[4, 4, 0, 0]}
+                  barSize={18}
+                />
+                <Bar
+                  dataKey="Pending"
+                  name="Pending PM"
+                  fill={CHART_COLORS.amber}
+                  radius={[4, 4, 0, 0]}
+                  barSize={18}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        {/* Top Low Stock Spare Parts (Horizontal Bar Chart - 6 cols) */}
+        <section className="xl:col-span-6 bg-white rounded-2xl border border-[#e8eef5] shadow-[0_1px_3px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 mb-5 border-b border-[#f1f5f9]">
+            <div>
+              <h3 className="text-[15px] font-bold text-[#0f172a] tracking-tight">
+                Top Low Stock Spare Parts
+              </h3>
+              <p className="text-xs text-[#64748b] mt-0.5">
+                Available Stock vs Minimum Reorder Quantity
+              </p>
+            </div>
+            <InlineLegend
+              items={[
+                { label: 'Min Reorder', color: CHART_COLORS.baseline },
+                { label: 'Low Stock', color: CHART_COLORS.amber },
+                { label: 'Out of Stock', color: CHART_COLORS.rose },
+              ]}
+            />
+          </div>
+
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={lowStockChartData}
+                layout="vertical"
+                barGap={4}
+                margin={{ top: 0, right: 16, left: 4, bottom: 0 }}
+              >
+                <CartesianGrid stroke="#f1f5f9" horizontal={false} />
+                <XAxis
+                  type="number"
+                  tick={AXIS_TICK_STYLE}
+                  axisLine={{ stroke: '#e2e8f0' }}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="partCode"
+                  width={62}
+                  tick={{ fill: '#334155', fontSize: 11.5, fontWeight: 600 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Bar
+                  dataKey="MinReorder"
+                  name="Min Reorder Qty"
+                  fill={CHART_COLORS.baseline}
+                  radius={[0, 4, 4, 0]}
+                  barSize={18}
+                />
+                <Bar
+                  dataKey="Available"
+                  name="Available Stock"
+                  fill={CHART_COLORS.amber}
+                  radius={[0, 4, 4, 0]}
+                  barSize={18}
+                >
+                  {lowStockChartData.map((entry) => (
+                    <Cell
+                      key={entry.partCode}
+                      fill={entry.isOutOfStock ? CHART_COLORS.rose : CHART_COLORS.amber}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Clean Structured Low-Stock Summary List */}
+          <div className="mt-4 pt-3 border-t border-[#f1f5f9] divide-y divide-[#f8fafc] text-xs">
+            {lowStockChartData.map((part) => (
+              <div
+                key={part.partCode}
+                className="py-1.5 flex items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{
+                      backgroundColor: part.isOutOfStock
+                        ? CHART_COLORS.rose
+                        : CHART_COLORS.amber,
+                    }}
+                  />
+                  <span className="font-semibold text-[#0f172a] shrink-0">
+                    {part.partCode}
+                  </span>
+                  <span className="text-[#64748b] truncate">{part.description}</span>
+                </div>
+                <span className="font-semibold tabular-nums shrink-0 text-[#334155]">
+                  <span
+                    className={
+                      part.isOutOfStock ? 'text-[#e11d48]' : 'text-[#d97706]'
+                    }
+                  >
+                    {part.Available}
+                  </span>
+                  <span className="text-[#94a3b8]"> / {part.MinReorder}</span>
+                </span>
+              </div>
+            ))}
           </div>
         </section>
       </div>

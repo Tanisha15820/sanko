@@ -9,7 +9,22 @@ import {
   Eye,
   X,
   Check,
+  Calendar,
+  RotateCcw,
 } from 'lucide-react';
+
+// Extract YYYY-MM-DD from startDate or display startTime (e.g. "20 Nov 2026, 10:15 AM")
+const extractIsoDate = (item) => {
+  if (item.startDate) return item.startDate;
+  if (!item.startTime) return '';
+  const datePart = item.startTime.split(',')[0].trim();
+  const parsed = new Date(datePart);
+  if (Number.isNaN(parsed.getTime())) return '';
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+  const dd = String(parsed.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 const initialBreakdowns = [
   {
@@ -102,6 +117,7 @@ const BreakdownManagement = ({
   const breakdowns = propBreakdowns || localBreakdowns;
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedDate, setSelectedDate] = useState('');
 
   // Modals state
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
@@ -163,7 +179,9 @@ const BreakdownManagement = ({
       item.machineName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.faultCategory.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.technician.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
+    const itemDate = extractIsoDate(item);
+    const matchesDate = !selectedDate || itemDate === selectedDate;
+    return matchesStatus && matchesSearch && matchesDate;
   });
 
   const handleLogSubmit = (e) => {
@@ -176,13 +194,13 @@ const BreakdownManagement = ({
     const nextNum = 41 + breakdowns.length - 5;
     const formattedTime = formData.startTime
       ? new Date(formData.startTime).toLocaleString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true,
-        })
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      })
       : '20 Nov 2026, 02:30 PM';
 
     const newRecord = {
@@ -190,6 +208,7 @@ const BreakdownManagement = ({
       machineId: machineObj.id,
       machineName: machineObj.name,
       faultCategory: formData.faultCategory,
+      startDate: formData.startTime ? formData.startTime.slice(0, 10) : '2026-11-20',
       startTime: formattedTime,
       downtime: '15m',
       technician: formData.technician,
@@ -236,58 +255,65 @@ const BreakdownManagement = ({
 
   return (
     <div className="space-y-5">
-      {/* 4 Summary KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {/* Breakdown Records Table Card */}
       <section className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-[#f1f5f9] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-extrabold text-[#0f172a]">Breakdown Management</h3>
-            <p className="text-xs font-medium text-[#64748b] mt-0.5">
-              Track active machine faults, root causes, technician assignments, and downtime history
-            </p>
+        <div className="p-6 border-b border-[#f1f5f9] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-extrabold text-[#0f172a]">Breakdown Management</h3>
+              <p className="text-xs font-medium text-[#64748b] mt-0.5">
+                Track active machine faults, root causes, technician assignments, and downtime history
+              </p>
+            </div>
+
+            {/* Log New Breakdown Button at the far right end */}
+            <button
+              type="button"
+              onClick={() => setIsLogModalOpen(true)}
+              className="ml-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white text-xs font-bold shadow-[0_6px_16px_rgba(11,87,208,0.22)] transition-all cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Log New Breakdown</span>
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Search Box */}
-            <div className="relative w-full sm:w-60">
-              <Search className="w-4 h-4 text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search breakdown, machine..."
-                className="w-full h-9 pl-9 pr-3.5 bg-[#f3f6fb] hover:bg-[#edf2f9] focus:bg-white border border-transparent focus:border-[#0b57d0]/30 rounded-xl text-xs font-medium text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#0b57d0]/10 transition-all"
-              />
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Search Box */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-4 h-4 text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search breakdown, machine..."
+                  className="w-full h-9 pl-9 pr-3.5 bg-[#f3f6fb] hover:bg-[#edf2f9] focus:bg-white border border-transparent focus:border-[#0b57d0]/30 rounded-xl text-xs font-medium text-[#0f172a] placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#0b57d0]/10 transition-all"
+                />
+              </div>
+
+              {/* Single Date Filter */}
+              <div className="relative">
+                <Calendar className="w-3.5 h-3.5 text-[#0b57d0] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  title="Filter by Breakdown Date"
+                  className="h-9 pl-8 pr-3 bg-[#f3f6fb] hover:bg-[#edf2f9] focus:bg-white border border-[#d6deeb] focus:border-[#0b57d0] rounded-xl text-xs font-bold text-[#0f172a] focus:outline-none cursor-pointer"
+                />
+              </div>
+
+              {selectedDate && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate('')}
+                  className="h-9 px-2.5 rounded-xl bg-[#f3f6fb] hover:bg-[#e8effa] text-[#334155] hover:text-[#0b57d0] text-xs font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Clear date filter"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Clear</span>
+                </button>
+              )}
             </div>
 
             {/* Filter Tabs */}
@@ -297,26 +323,15 @@ const BreakdownManagement = ({
                   key={status}
                   type="button"
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    statusFilter === status
-                      ? 'bg-[#0b57d0] text-white shadow-xs'
-                      : 'text-[#475569] hover:text-[#0f172a]'
-                  }`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${statusFilter === status
+                    ? 'bg-[#0b57d0] text-white shadow-xs'
+                    : 'text-[#475569] hover:text-[#0f172a]'
+                    }`}
                 >
                   {status}
                 </button>
               ))}
             </div>
-
-            {/* Log New Breakdown Button */}
-            <button
-              type="button"
-              onClick={() => setIsLogModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white text-xs font-bold shadow-[0_6px_16px_rgba(11,87,208,0.22)] transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Log New Breakdown</span>
-            </button>
           </div>
         </div>
 
@@ -364,16 +379,14 @@ const BreakdownManagement = ({
                   </td>
                   <td className="py-3.5 px-5 whitespace-nowrap">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                        item.status === 'Active'
-                          ? 'bg-[#feeceb] text-[#b91c1c]'
-                          : 'bg-[#e8f8ef] text-[#15803d]'
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${item.status === 'Active'
+                        ? 'bg-[#feeceb] text-[#b91c1c]'
+                        : 'bg-[#e8f8ef] text-[#15803d]'
+                        }`}
                     >
                       <span
-                        className={`w-1.5 h-1.5 rounded-full ${
-                          item.status === 'Active' ? 'bg-[#dc2626]' : 'bg-[#16a34a]'
-                        }`}
+                        className={`w-1.5 h-1.5 rounded-full ${item.status === 'Active' ? 'bg-[#dc2626]' : 'bg-[#16a34a]'
+                          }`}
                       />
                       {item.status}
                     </span>
@@ -549,11 +562,10 @@ const BreakdownManagement = ({
                   {selectedBreakdown.breakdownId}
                 </span>
                 <span
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                    selectedBreakdown.status === 'Active'
-                      ? 'bg-[#feeceb] text-[#b91c1c]'
-                      : 'bg-[#e8f8ef] text-[#15803d]'
-                  }`}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${selectedBreakdown.status === 'Active'
+                    ? 'bg-[#feeceb] text-[#b91c1c]'
+                    : 'bg-[#e8f8ef] text-[#15803d]'
+                    }`}
                 >
                   {selectedBreakdown.status}
                 </span>
@@ -612,11 +624,10 @@ const BreakdownManagement = ({
                 <button
                   type="button"
                   onClick={() => handleToggleStatus(selectedBreakdown.breakdownId)}
-                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    selectedBreakdown.status === 'Active'
-                      ? 'bg-[#16a34a] hover:bg-[#15803d] text-white'
-                      : 'bg-[#fff4e5] hover:bg-[#ffedd5] text-[#c2410c]'
-                  }`}
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${selectedBreakdown.status === 'Active'
+                    ? 'bg-[#16a34a] hover:bg-[#15803d] text-white'
+                    : 'bg-[#fff4e5] hover:bg-[#ffedd5] text-[#c2410c]'
+                    }`}
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>

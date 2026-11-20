@@ -1,20 +1,13 @@
 import React, { useState } from 'react';
 import {
-  Package,
-  CheckCircle2,
   AlertTriangle,
-  XCircle,
   Search,
   Plus,
   Edit3,
   Eye,
   RotateCcw,
-  ArrowUpRight,
-  ArrowDownLeft,
   X,
   MapPin,
-  Cpu,
-  History,
 } from 'lucide-react';
 
 const getStockStatus = (availableStock, minThreshold) => {
@@ -79,47 +72,6 @@ const SparePartsInventory = ({
     ...part,
     stockStatus: getStockStatus(part.availableStock, part.minThreshold),
   }));
-
-  // Summary counts
-  const totalPartsCount = partsWithStatus.length;
-  const inStockCount = partsWithStatus.filter((p) => p.stockStatus === 'In Stock').length;
-  const lowStockCount = partsWithStatus.filter((p) => p.stockStatus === 'Low Stock').length;
-  const outOfStockCount = partsWithStatus.filter((p) => p.stockStatus === 'Out of Stock').length;
-
-  const summaryCards = [
-    {
-      id: 1,
-      title: 'Total Spare Parts',
-      value: String(totalPartsCount),
-      support: 'Registered SKU catalog',
-      icon: Package,
-      iconBg: 'bg-[#eef4ff] text-[#0b57d0]',
-    },
-    {
-      id: 2,
-      title: 'Available Stock Items',
-      value: String(inStockCount),
-      support: 'Above reorder threshold',
-      icon: CheckCircle2,
-      iconBg: 'bg-[#e8f8ef] text-[#16a34a]',
-    },
-    {
-      id: 3,
-      title: 'Low Stock Items',
-      value: String(lowStockCount),
-      support: 'Below minimum reorder level',
-      icon: AlertTriangle,
-      iconBg: 'bg-[#fff4e5] text-[#ea580c]',
-    },
-    {
-      id: 4,
-      title: 'Out of Stock Items',
-      value: String(outOfStockCount),
-      support: 'Immediate purchase required',
-      icon: XCircle,
-      iconBg: 'bg-[#feeceb] text-[#dc2626]',
-    },
-  ];
 
   // Unique Filter Options
   const machineOptions = [
@@ -204,37 +156,6 @@ const SparePartsInventory = ({
 
   return (
     <div className="space-y-5">
-      {/* 4 Summary KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {/* Automatic Low-Stock / Reorder Threshold Alert Banner */}
       {criticalParts.length > 0 && (
         <section className="bg-[#fff4e5] border border-[#fed7aa] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -456,89 +377,6 @@ const SparePartsInventory = ({
                   </td>
                 </tr>
               )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Stock Ledger Section */}
-      <section className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-[#f1f5f9] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#eef4ff] text-[#0b57d0] flex items-center justify-center">
-              <History className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">Stock Ledger</h3>
-              <p className="text-xs font-medium text-[#64748b] mt-0.5">
-                Real-time inventory transaction log recording stock additions and PM/Breakdown deductions
-              </p>
-            </div>
-          </div>
-          <span className="px-3 py-1 rounded-full bg-[#f3f6fb] text-[#334155] text-xs font-bold self-start sm:self-auto">
-            {stockLedger.length} Transactions
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#f8fafc] border-b border-[#f1f5f9] text-[11px] font-bold text-[#64748b] uppercase tracking-wider">
-                <th className="py-3.5 px-5">Transaction ID</th>
-                <th className="py-3.5 px-5">Part Code</th>
-                <th className="py-3.5 px-5">Part Description</th>
-                <th className="py-3.5 px-5">Transaction Type</th>
-                <th className="py-3.5 px-5">Quantity</th>
-                <th className="py-3.5 px-5">Reference</th>
-                <th className="py-3.5 px-5">Date &amp; Time</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {stockLedger.map((tx) => {
-                const isAdded = tx.transactionType === 'Stock Added';
-                return (
-                  <tr key={tx.transactionId} className="hover:bg-[#f8fafc]/80 transition-colors">
-                    <td className="py-3.5 px-5 font-bold text-[#0f172a] whitespace-nowrap">
-                      {tx.transactionId}
-                    </td>
-                    <td className="py-3.5 px-5 font-bold text-[#0b57d0] whitespace-nowrap">
-                      {tx.partCode}
-                    </td>
-                    <td className="py-3.5 px-5 font-semibold text-[#0f172a] whitespace-nowrap">
-                      {tx.description}
-                    </td>
-                    <td className="py-3.5 px-5 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          isAdded
-                            ? 'bg-[#e8f8ef] text-[#15803d]'
-                            : 'bg-[#feeceb] text-[#b91c1c]'
-                        }`}
-                      >
-                        {isAdded ? (
-                          <ArrowDownLeft className="w-3.5 h-3.5" />
-                        ) : (
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        )}
-                        {tx.transactionType}
-                      </span>
-                    </td>
-                    <td
-                      className={`py-3.5 px-5 font-extrabold whitespace-nowrap ${
-                        isAdded ? 'text-[#15803d]' : 'text-[#b91c1c]'
-                      }`}
-                    >
-                      {isAdded ? `+${tx.quantity}` : `-${tx.quantity}`}
-                    </td>
-                    <td className="py-3.5 px-5 font-semibold text-[#334155] whitespace-nowrap">
-                      {tx.reference}
-                    </td>
-                    <td className="py-3.5 px-5 text-[#64748b] whitespace-nowrap">
-                      {tx.dateTime}
-                    </td>
-                  </tr>
-                );
-              })}
             </tbody>
           </table>
         </div>

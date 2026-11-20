@@ -1,19 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Settings,
-  PlayCircle,
-  AlertTriangle,
-  Wrench,
-  PauseCircle,
   Search,
   Eye,
   Clock,
   CalendarCheck,
   ArrowUpRight,
+  Plus,
+  X,
 } from 'lucide-react';
 
-const machinesList = [
+const initialMachinesList = [
   {
     id: 'IMM-01',
     name: 'Toshiba 180T Injection',
@@ -112,49 +109,6 @@ const machinesList = [
   },
 ];
 
-const summaryCards = [
-  {
-    id: 1,
-    title: 'Total Machines',
-    value: '24',
-    support: '4 Molding Lines',
-    icon: Settings,
-    iconBg: 'bg-[#eef4ff] text-[#0b57d0]',
-  },
-  {
-    id: 2,
-    title: 'Running',
-    value: '18',
-    support: '75.0% Availability',
-    icon: PlayCircle,
-    iconBg: 'bg-[#e8f8ef] text-[#16a34a]',
-  },
-  {
-    id: 3,
-    title: 'Under Breakdown',
-    value: '2',
-    support: '1 Critical • 1 Repair',
-    icon: AlertTriangle,
-    iconBg: 'bg-[#feeceb] text-[#dc2626]',
-  },
-  {
-    id: 4,
-    title: 'Under Scheduled PM',
-    value: '2',
-    support: 'Est. done 18:00 hrs',
-    icon: Wrench,
-    iconBg: 'bg-[#fff4e5] text-[#ea580c]',
-  },
-  {
-    id: 5,
-    title: 'Idle',
-    value: '2',
-    support: 'Standby / Mold Change',
-    icon: PauseCircle,
-    iconBg: 'bg-[#f1f5f9] text-[#475569]',
-  },
-];
-
 const statusBadgeStyle = (status) => {
   switch (status) {
     case 'Running':
@@ -183,12 +137,41 @@ const statusDotStyle = (status) => {
   }
 };
 
+const STORAGE_KEY = 'sanko_gosei_machines_v1';
+
 const MachineStatus = () => {
   const navigate = useNavigate();
+  const [machines, setMachines] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : initialMachinesList;
+    } catch {
+      return initialMachinesList;
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
-  const filteredMachines = machinesList.filter((machine) => {
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(machines));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [machines]);
+
+  // Add Machine Popup Modal State
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    id: '',
+    name: '',
+    line: 'Line A - Automotive',
+    status: 'Running',
+    runningHours: '',
+    lastMaintenance: '2026-11-20',
+  });
+
+  const filteredMachines = machines.filter((machine) => {
     const matchesStatus = statusFilter === 'All' || machine.status === statusFilter;
     const matchesSearch =
       !searchQuery.trim() ||
@@ -202,51 +185,74 @@ const MachineStatus = () => {
     navigate(`/machines/details?id=${machine.id}`, { state: { machine } });
   };
 
+  const handleOpenAddModal = () => {
+    const nextNum = String(machines.length + 1).padStart(2, '0');
+    setFormData({
+      id: `IMM-${nextNum}`,
+      name: '',
+      line: 'Line A - Automotive',
+      status: 'Running',
+      runningHours: '0',
+      lastMaintenance: '2026-11-20',
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddMachineSubmit = (e) => {
+    e.preventDefault();
+
+    const formattedDate = formData.lastMaintenance
+      ? new Date(formData.lastMaintenance).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '20 Nov 2026';
+
+    const rawHrs = String(formData.runningHours).trim();
+    const formattedHours = rawHrs.toLowerCase().includes('hr')
+      ? rawHrs
+      : `${Number(rawHrs || 0).toLocaleString()} hrs`;
+
+    const newMachine = {
+      id: formData.id.trim() || `IMM-${machines.length + 1}`,
+      name: formData.name.trim(),
+      line: formData.line,
+      status: formData.status,
+      runningHours: formattedHours,
+      lastMaintenance: formattedDate,
+    };
+
+    setMachines((prev) => [newMachine, ...prev]);
+    setIsAddModalOpen(false);
+  };
+
   return (
     <div className="space-y-5">
-      {/* 5 Summary KPI Cards matching Dashboard UI */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {/* Machine Status Table Section */}
       <section className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] flex flex-col overflow-hidden">
-        {/* Table Header with Search and Status Filters */}
-        <div className="p-6 border-b border-[#f1f5f9] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-extrabold text-[#0f172a]">Machine Fleet Status</h3>
-            <p className="text-xs font-medium text-[#64748b] mt-0.5">
-              Click on any machine row or action button to inspect full machine profile &amp; telemetry
-            </p>
+        {/* Table Header with Search, Status Filters, and Add Machine Button at the Right End */}
+        <div className="p-6 border-b border-[#f1f5f9] space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg font-extrabold text-[#0f172a]">Machine Fleet Status</h3>
+              <p className="text-xs font-medium text-[#64748b] mt-0.5">
+                Click on any machine row or action button to inspect full machine profile &amp; telemetry
+              </p>
+            </div>
+
+            {/* Add Machine Button at the far right end */}
+            <button
+              type="button"
+              onClick={handleOpenAddModal}
+              className="ml-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white text-xs font-bold shadow-[0_6px_16px_rgba(11,87,208,0.22)] transition-all cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Machine</span>
+            </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
             {/* Search Box */}
             <div className="relative w-full sm:w-64">
               <Search className="w-4 h-4 text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -360,6 +366,160 @@ const MachineStatus = () => {
           </table>
         </div>
       </section>
+
+      {/* Add Machine Popup Form Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-[#0f172a]/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_20px_50px_rgba(15,23,42,0.18)] w-full max-w-lg overflow-hidden">
+            <div className="px-6 py-4 bg-[#f8fafc] border-b border-[#edf1f7] flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-[#0f172a]">Add New Machine</h3>
+                <p className="text-xs text-[#64748b]">
+                  Register a new molding machine into the plant fleet status table
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-[#e2e8f0]/50 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddMachineSubmit} className="p-6 space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Machine ID */}
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Machine ID
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.id}
+                    onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                    placeholder="e.g. IMM-13"
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                    required
+                  />
+                </div>
+
+                {/* Machine Name */}
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Machine Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="e.g. Toshiba 220T Servo"
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Production Line */}
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Production Line
+                  </label>
+                  <select
+                    value={formData.line}
+                    onChange={(e) => setFormData({ ...formData, line: e.target.value })}
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  >
+                    {[
+                      'Line A - Automotive',
+                      'Line B - Interior Trim',
+                      'Line C - Bumper Line',
+                      'Line D - Precision Gear',
+                    ].map((line) => (
+                      <option key={line} value={line}>
+                        {line}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Current Status */}
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Current Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  >
+                    {['Running', 'Under Breakdown', 'Under Scheduled PM', 'Idle'].map(
+                      (status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Running Hours */}
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Running Hours
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.runningHours}
+                    onChange={(e) =>
+                      setFormData({ ...formData, runningHours: e.target.value })
+                    }
+                    placeholder="e.g. 850"
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                    required
+                  />
+                </div>
+
+                {/* Last Maintenance Date */}
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Last Maintenance Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.lastMaintenance}
+                    onChange={(e) =>
+                      setFormData({ ...formData, lastMaintenance: e.target.value })
+                    }
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-[#d6deeb] font-bold text-[#475569] hover:bg-[#f8fafc] transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white font-bold shadow-[0_6px_16px_rgba(11,87,208,0.22)] transition-all cursor-pointer"
+                >
+                  Save Machine
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

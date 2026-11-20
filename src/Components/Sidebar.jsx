@@ -8,6 +8,7 @@ import {
   Settings,
   Factory,
   BarChart3,
+  ClipboardList,
   ShieldCheck,
   Calendar,
   ClipboardCheck,
@@ -41,7 +42,6 @@ const mainMenus = [
     subMenus: [
       { name: 'Machine Status', path: '/machines', icon: Activity },
       { name: 'Breakdown Management', path: '/breakdowns', icon: AlertTriangle },
-      { name: 'Machine Details', path: '/machines/details', icon: Settings },
     ],
   },
   {
@@ -49,6 +49,7 @@ const mainMenus = [
     name: 'Production',
     icon: Factory,
     subMenus: [
+      { name: 'Production Plan', path: '/production/plan', icon: ClipboardList },
       { name: 'Production Monitoring', path: '/production', icon: BarChart3 },
     ],
   },
@@ -58,7 +59,6 @@ const mainMenus = [
     icon: ShieldCheck,
     subMenus: [
       { name: 'PM Calendar', path: '/pm/calendar', icon: Calendar },
-      { name: 'PM Checklist', path: '/pm/checklist', icon: ClipboardCheck },
       { name: 'PM History', path: '/pm/history', icon: History },
     ],
   },

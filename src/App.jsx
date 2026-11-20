@@ -7,11 +7,13 @@ import MachineStatus from './Pages/MachineStatus';
 import BreakdownManagement from './Pages/BreakdownManagement';
 import MachineDetails from './Pages/MachineDetails';
 import ProductionMonitoring from './Pages/ProductionMonitoring';
+import ProductionPlan from './Pages/ProductionPlan';
 import PMCalendar from './Pages/PMCalendar';
 import PMChecklist from './Pages/PMChecklist';
 import PMHistory from './Pages/PMHistory';
 import SparePartsInventory from './Pages/SparePartsInventory';
 import ToolManagement from './Pages/ToolManagement';
+import ToolDetails from './Pages/ToolDetails';
 import NotificationsAlerts from './Pages/NotificationsAlerts';
 import EscalationManagement from './Pages/EscalationManagement';
 
@@ -743,15 +745,85 @@ const initialEscalations = [
   },
 ];
 
+const BREAKDOWNS_STORAGE_KEY = 'sanko_gosei_breakdowns_v1';
+const ESCALATIONS_STORAGE_KEY = 'sanko_gosei_escalations_v1';
+const NOTIFICATIONS_STORAGE_KEY = 'sanko_gosei_notifications_v1';
+const PM_TASKS_STORAGE_KEY = 'sanko_gosei_pm_tasks_v1';
+const SPARE_PARTS_STORAGE_KEY = 'sanko_gosei_spare_parts_v1';
+
+const loadSavedState = (key, fallback) => {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 function App() {
-  const [breakdowns, setBreakdowns] = useState(initialBreakdowns);
-  const [pmTasks, setPmTasks] = useState(initialPmTasks);
-  const [spareParts, setSpareParts] = useState(initialSpareParts);
+  const [breakdowns, setBreakdowns] = useState(() =>
+    loadSavedState(BREAKDOWNS_STORAGE_KEY, initialBreakdowns)
+  );
+  const [pmTasks, setPmTasks] = useState(() =>
+    loadSavedState(PM_TASKS_STORAGE_KEY, initialPmTasks)
+  );
+  const [spareParts, setSpareParts] = useState(() =>
+    loadSavedState(SPARE_PARTS_STORAGE_KEY, initialSpareParts)
+  );
   const [stockLedger, setStockLedger] = useState(initialStockLedger);
   const [pmHistory, setPmHistory] = useState(initialPmHistory);
-  const [notifications, setNotifications] = useState(initialNotifications);
-  const [escalations, setEscalations] = useState(initialEscalations);
+  const [notifications, setNotifications] = useState(() =>
+    loadSavedState(NOTIFICATIONS_STORAGE_KEY, initialNotifications)
+  );
+  const [escalations, setEscalations] = useState(() =>
+    loadSavedState(ESCALATIONS_STORAGE_KEY, initialEscalations)
+  );
   const [criticalDurationMins, setCriticalDurationMins] = useState(90);
+
+  // Persist breakdowns, escalations, and notifications across page refreshes
+  useEffect(() => {
+    try {
+      localStorage.setItem(BREAKDOWNS_STORAGE_KEY, JSON.stringify(breakdowns));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [breakdowns]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(ESCALATIONS_STORAGE_KEY, JSON.stringify(escalations));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [escalations]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [notifications]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PM_TASKS_STORAGE_KEY, JSON.stringify(pmTasks));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [pmTasks]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SPARE_PARTS_STORAGE_KEY, JSON.stringify(spareParts));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [spareParts]);
+
+  const handleAddPmTask = (newTask) => {
+    setPmTasks((prev) => [newTask, ...prev]);
+  };
 
   // Helper to add a notification without duplicate eventKeys
   const addUniqueNotification = (newNotif) => {
@@ -1234,7 +1306,10 @@ function App() {
 
         {/* Common Dashboard Layout wrapping all Sidebar Navigation Routes */}
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/dashboard"
+            element={<Dashboard pmTasks={pmTasks} spareParts={spareParts} />}
+          />
           <Route path="/machines" element={<MachineStatus />} />
           <Route
             path="/breakdowns"
@@ -1248,9 +1323,10 @@ function App() {
           />
           <Route path="/machines/details" element={<MachineDetails />} />
           <Route path="/production" element={<ProductionMonitoring />} />
+          <Route path="/production/plan" element={<ProductionPlan />} />
           <Route
             path="/pm/calendar"
-            element={<PMCalendar pmTasks={pmTasks} />}
+            element={<PMCalendar pmTasks={pmTasks} onAddPmTask={handleAddPmTask} />}
           />
           <Route
             path="/pm/checklist"
@@ -1277,6 +1353,7 @@ function App() {
             }
           />
           <Route path="/inventory/tools" element={<ToolManagement />} />
+          <Route path="/inventory/tools/details" element={<ToolDetails />} />
           <Route
             path="/notifications"
             element={

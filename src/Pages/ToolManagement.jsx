@@ -1,22 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Wrench,
-  Layers,
-  Boxes,
   AlertTriangle,
-  CalendarClock,
   Search,
   RotateCcw,
   Eye,
   X,
-  CheckCircle2,
   MapPin,
-  RefreshCw,
-  Edit3,
-  Check,
+  Plus,
 } from 'lucide-react';
 
-const initialTools = [
+export const initialTools = [
   {
     toolId: 'MLD-SG-204',
     toolName: 'Door Trim Clip Housing 2-Cavity Mold',
@@ -218,72 +212,51 @@ const isUpcomingRefurb = (tool) => {
   );
 };
 
+export const TOOLS_STORAGE_KEY = 'sanko_gosei_tools_v1';
+
+const loadSavedTools = () => {
+  try {
+    const saved = localStorage.getItem(TOOLS_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : initialTools;
+  } catch {
+    return initialTools;
+  }
+};
+
 const ToolManagement = () => {
-  const [tools, setTools] = useState(initialTools);
+  const navigate = useNavigate();
+  const [tools, setTools] = useState(loadSavedTools);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('All Types');
   const [machineFilter, setMachineFilter] = useState('All Machines');
   const [locationFilter, setLocationFilter] = useState('All Locations');
   const [statusFilter, setStatusFilter] = useState('All Status');
 
-  const [selectedTool, setSelectedTool] = useState(null);
-  const [editForm, setEditForm] = useState({
-    currentLocation: '',
-    status: '',
-    nextRefurbishmentDate: '',
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    toolId: '',
+    toolName: '',
+    toolType: 'Molds',
+    compatibleMachine: 'IMM-01 (Toshiba 180T)',
+    usageCount: 0,
+    maxRefurbShots: 50000,
+    currentLocation: 'Tool Room Bay-1',
+    lastMaintenanceDate: '2026-11-21',
+    nextRefurbishmentDate: '2027-01-20',
+    status: 'In Tool Room',
     remarks: '',
   });
-  const [updateSaved, setUpdateSaved] = useState(false);
 
-  // Summary Counts
-  const totalTools = tools.length;
-  const inPressCount = tools.filter((t) => t.status === 'In Press').length;
-  const inToolRoomCount = tools.filter((t) => t.status === 'In Tool Room').length;
-  const underMaintCount = tools.filter((t) => t.status === 'Under Maintenance').length;
+  useEffect(() => {
+    try {
+      localStorage.setItem(TOOLS_STORAGE_KEY, JSON.stringify(tools));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [tools]);
+
+  // Upcoming Refurbishment Count (used in table header badge)
   const upcomingRefurbCount = tools.filter((t) => isUpcomingRefurb(t)).length;
-
-  const summaryCards = [
-    {
-      id: 1,
-      title: 'Total Tools',
-      value: String(totalTools),
-      support: 'Molds, Dies, Jigs & Fixtures',
-      icon: Layers,
-      iconBg: 'bg-[#eef4ff] text-[#0b57d0]',
-    },
-    {
-      id: 2,
-      title: 'Tools In Press',
-      value: String(inPressCount),
-      support: 'Active in molding lines',
-      icon: CheckCircle2,
-      iconBg: 'bg-[#e8f8ef] text-[#16a34a]',
-    },
-    {
-      id: 3,
-      title: 'Tools In Tool Room',
-      value: String(inToolRoomCount),
-      support: 'Ready on standby racks',
-      icon: Boxes,
-      iconBg: 'bg-[#f3eefe] text-[#7c3aed]',
-    },
-    {
-      id: 4,
-      title: 'Under Maintenance',
-      value: String(underMaintCount),
-      support: 'In tool maintenance bay',
-      icon: Wrench,
-      iconBg: 'bg-[#fff4e5] text-[#ea580c]',
-    },
-    {
-      id: 5,
-      title: 'Upcoming Refurbishment',
-      value: String(upcomingRefurbCount),
-      support: '≥90% cycle limit / due soon',
-      icon: CalendarClock,
-      iconBg: 'bg-[#feeceb] text-[#dc2626]',
-    },
-  ];
 
   const machineOptions = [
     'All Machines',
@@ -325,69 +298,54 @@ const ToolManagement = () => {
     setStatusFilter('All Status');
   };
 
-  const handleOpenDetails = (tool) => {
-    setSelectedTool(tool);
-    setEditForm({
-      currentLocation: tool.currentLocation,
-      status: tool.status,
-      nextRefurbishmentDate: tool.nextRefurbishmentDate,
-      remarks: tool.remarks,
+  const handleOpenAddModal = () => {
+    setAddForm({
+      toolId: `MLD-SG-${801 + tools.length}`,
+      toolName: '',
+      toolType: 'Molds',
+      compatibleMachine: 'IMM-01 (Toshiba 180T)',
+      usageCount: 0,
+      maxRefurbShots: 50000,
+      currentLocation: 'Tool Room Bay-1',
+      lastMaintenanceDate: '2026-11-21',
+      nextRefurbishmentDate: '2027-01-20',
+      status: 'In Tool Room',
+      remarks: '',
     });
-    setUpdateSaved(false);
+    setIsAddModalOpen(true);
   };
 
-  const handleSaveToolUpdate = (e) => {
+  const handleAddToolSubmit = (e) => {
     e.preventDefault();
-    if (!selectedTool) return;
+    if (!addForm.toolId.trim() || !addForm.toolName.trim()) return;
 
-    const updated = {
-      ...selectedTool,
-      currentLocation: editForm.currentLocation,
-      status: editForm.status,
-      nextRefurbishmentDate: editForm.nextRefurbishmentDate,
-      remarks: editForm.remarks,
+    const newTool = {
+      toolId: addForm.toolId.trim(),
+      toolName: addForm.toolName.trim(),
+      toolType: addForm.toolType,
+      compatibleMachine: addForm.compatibleMachine.trim(),
+      usageCount: Math.max(0, Number(addForm.usageCount) || 0),
+      maxRefurbShots: Math.max(1, Number(addForm.maxRefurbShots) || 50000),
+      currentLocation: addForm.currentLocation.trim(),
+      lastMaintenanceDate: addForm.lastMaintenanceDate,
+      nextRefurbishmentDate: addForm.nextRefurbishmentDate,
+      status: addForm.status,
+      remarks: addForm.remarks.trim() || 'Newly registered tool in plant tooling catalog.',
+      currentUsageInfo: `Located at ${addForm.currentLocation.trim()} (${addForm.status}).`,
+      usageHistory: [],
+      maintenanceHistory: [],
     };
 
-    setTools((prev) =>
-      prev.map((t) => (t.toolId === selectedTool.toolId ? updated : t))
-    );
-    setSelectedTool(updated);
-    setUpdateSaved(true);
+    setTools((prev) => [newTool, ...prev]);
+    setIsAddModalOpen(false);
+  };
+
+  const handleOpenDetails = (tool) => {
+    navigate(`/inventory/tools/details?toolId=${encodeURIComponent(tool.toolId)}`);
   };
 
   return (
     <div className="space-y-5">
-      {/* 5 Summary KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {/* Search & Filters Section */}
       <section className="bg-white rounded-2xl border border-[#edf1f7] p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)]">
         <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
@@ -484,14 +442,25 @@ const ToolManagement = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleResetFilters}
-            className="h-10 px-4 rounded-xl bg-[#f3f6fb] hover:bg-[#e8effa] text-[#334155] hover:text-[#0b57d0] text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="h-10 px-4 rounded-xl bg-[#f3f6fb] hover:bg-[#e8effa] text-[#334155] hover:text-[#0b57d0] text-xs font-bold inline-flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenAddModal}
+              className="h-10 px-4 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white text-xs font-bold shadow-[0_6px_16px_rgba(11,87,208,0.22)] inline-flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Tool</span>
+            </button>
+          </div>
         </div>
       </section>
 
@@ -627,268 +596,234 @@ const ToolManagement = () => {
         </div>
       </section>
 
-      {/* Tool Details & Refurbishment Management Modal */}
-      {selectedTool && (
+      {/* Add Tool Popup Modal */}
+      {isAddModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#0f172a]/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_20px_50px_rgba(15,23,42,0.18)] w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
-            {/* Modal Header */}
+          <div className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_20px_50px_rgba(15,23,42,0.18)] w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
             <div className="px-6 py-4 bg-[#f8fafc] border-b border-[#edf1f7] flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-3">
-                <span className="px-2.5 py-1 rounded-lg bg-[#eef4ff] text-[#0b57d0] text-xs font-extrabold">
-                  {selectedTool.toolId}
-                </span>
-                <div>
-                  <h3 className="text-base font-extrabold text-[#0f172a]">
-                    {selectedTool.toolName}
-                  </h3>
-                  <p className="text-xs text-[#64748b]">
-                    {selectedTool.toolType} • Compatible with {selectedTool.compatibleMachine}
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-base font-extrabold text-[#0f172a]">
+                  Add New Tool
+                </h3>
+                <p className="text-xs text-[#64748b] mt-0.5">
+                  Register a new mold, die, jig, or fixture into the tooling fleet
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedTool(null)}
-                className="p-1.5 rounded-lg text-[#64748b] hover:text-[#0f172a] cursor-pointer"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 rounded-lg text-[#64748b] hover:text-[#0f172a] hover:bg-[#e2e8f0]/60 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs">
-              {/* 1. Tool Information Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-[#f8fafc] border border-[#edf1f7]">
+            <form
+              onSubmit={handleAddToolSubmit}
+              className="p-6 overflow-y-auto space-y-4 text-xs"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-[#64748b]">Tool ID &amp; Type</p>
-                  <p className="font-extrabold text-[#0f172a] mt-0.5">
-                    {selectedTool.toolId} ({selectedTool.toolType})
-                  </p>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Tool ID *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={addForm.toolId}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, toolId: e.target.value })
+                    }
+                    placeholder="e.g. MLD-SG-801"
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
                 </div>
-                <div>
-                  <p className="text-[#64748b]">Compatible Machine</p>
-                  <p className="font-bold text-[#0b57d0] mt-0.5">
-                    {selectedTool.compatibleMachine}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[#64748b]">Current Status</p>
-                  <span
-                    className={`inline-block mt-0.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${statusBadgeStyle(
-                      selectedTool.status
-                    )}`}
-                  >
-                    {selectedTool.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-[#64748b]">Current Location</p>
-                  <p className="font-bold text-[#0f172a] mt-0.5">
-                    {selectedTool.currentLocation}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[#64748b]">Total Usage Count</p>
-                  <p className="font-extrabold text-[#0f172a] mt-0.5">
-                    {selectedTool.usageCount.toLocaleString()} /{' '}
-                    {selectedTool.maxRefurbShots.toLocaleString()} shots
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[#64748b]">Next Refurbishment Date</p>
-                  <p className="font-extrabold text-[#dc2626] mt-0.5">
-                    {selectedTool.nextRefurbishmentDate}
-                  </p>
-                </div>
-              </div>
 
-              {/* 2. Tool Usage & Usage History */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-[#f8fafc] border border-[#edf1f7]">
-                  <h4 className="text-xs font-extrabold text-[#0f172a] mb-2 flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4 text-[#0b57d0]" />
-                    <span>Tool Usage &amp; Current Run Info</span>
-                  </h4>
-                  <p className="text-[#475569] leading-relaxed mb-3">
-                    {selectedTool.currentUsageInfo}
-                  </p>
-                  <div className="space-y-1.5">
-                    <p className="font-bold text-[#334155] text-[11px] uppercase">
-                      Recent Shot / Cycle Logs
-                    </p>
-                    {selectedTool.usageHistory.map((u, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between p-2 rounded-lg bg-white border border-[#edf1f7]"
-                      >
-                        <span className="font-semibold text-[#0f172a]">
-                          {u.date} ({u.shift})
-                        </span>
-                        <span className="font-bold text-[#0b57d0]">{u.shots}</span>
-                      </div>
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Tool Type *
+                  </label>
+                  <select
+                    value={addForm.toolType}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, toolType: e.target.value })
+                    }
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0] cursor-pointer"
+                  >
+                    {['Molds', 'Dies', 'Jigs', 'Fixtures'].map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-
-                {/* 3. Refurbishment Schedule & Editable Location / Maintenance Form */}
-                <form
-                  onSubmit={handleSaveToolUpdate}
-                  className="p-4 rounded-xl bg-[#eef4ff]/50 border border-[#dce7ff] space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-extrabold text-[#0f172a] flex items-center gap-1.5">
-                      <Edit3 className="w-4 h-4 text-[#0b57d0]" />
-                      <span>Update Location &amp; Refurbishment Schedule</span>
-                    </h4>
-                    {updateSaved && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#15803d]">
-                        <Check className="w-3.5 h-3.5" /> Saved
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block font-bold text-[#334155] mb-1">
-                        Current Location
-                      </label>
-                      <input
-                        type="text"
-                        value={editForm.currentLocation}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, currentLocation: e.target.value })
-                        }
-                        className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded-xl font-semibold text-[#0f172a]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-[#334155] mb-1">
-                        Tool Status
-                      </label>
-                      <select
-                        value={editForm.status}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, status: e.target.value })
-                        }
-                        className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded-xl font-bold text-[#0f172a]"
-                      >
-                        <option value="In Press">In Press</option>
-                        <option value="In Tool Room">In Tool Room</option>
-                        <option value="Under Maintenance">Under Maintenance</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2.5">
-                    <div>
-                      <label className="block font-bold text-[#334155] mb-1">
-                        Last Refurbishment
-                      </label>
-                      <input
-                        type="text"
-                        value={selectedTool.lastMaintenanceDate}
-                        disabled
-                        className="w-full h-9 px-2.5 bg-[#f1f5f9] border border-[#cbd5e1] rounded-xl font-semibold text-[#64748b]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-bold text-[#334155] mb-1">
-                        Next Scheduled Refurbishment
-                      </label>
-                      <input
-                        type="date"
-                        value={editForm.nextRefurbishmentDate}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            nextRefurbishmentDate: e.target.value,
-                          })
-                        }
-                        className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded-xl font-bold text-[#0f172a]"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-[#334155] mb-1">
-                      Maintenance Remarks
-                    </label>
-                    <input
-                      type="text"
-                      value={editForm.remarks}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, remarks: e.target.value })
-                      }
-                      className="w-full h-9 px-2.5 bg-white border border-[#cbd5e1] rounded-xl font-medium text-[#0f172a]"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-2 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white font-bold shadow-xs transition-all cursor-pointer"
-                  >
-                    Save Tool Updates
-                  </button>
-                </form>
               </div>
 
-              {/* 4. Tool Maintenance History Table */}
               <div>
-                <h4 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider mb-2.5 flex items-center gap-2">
-                  <Wrench className="w-4 h-4 text-[#0b57d0]" />
-                  <span>Tool Maintenance History</span>
-                </h4>
-                <div className="border border-[#edf1f7] rounded-xl overflow-hidden">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[#f8fafc] border-b border-[#edf1f7] text-[10.5px] font-bold text-[#64748b] uppercase">
-                        <th className="py-2.5 px-4">Maintenance Date</th>
-                        <th className="py-2.5 px-4">Maintenance Type</th>
-                        <th className="py-2.5 px-4">Description</th>
-                        <th className="py-2.5 px-4">Technician</th>
-                        <th className="py-2.5 px-4">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#f1f5f9]">
-                      {selectedTool.maintenanceHistory.map((mh, i) => (
-                        <tr key={i}>
-                          <td className="py-2.5 px-4 font-semibold text-[#0f172a]">
-                            {mh.date}
-                          </td>
-                          <td className="py-2.5 px-4 font-bold text-[#0b57d0]">
-                            {mh.type}
-                          </td>
-                          <td className="py-2.5 px-4 text-[#475569]">{mh.description}</td>
-                          <td className="py-2.5 px-4 font-medium text-[#334155]">
-                            {mh.technician}
-                          </td>
-                          <td className="py-2.5 px-4">
-                            <span className="px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-[#e8f8ef] text-[#15803d]">
-                              {mh.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <label className="block font-bold text-[#334155] mb-1.5">
+                  Tool Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={addForm.toolName}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, toolName: e.target.value })
+                  }
+                  placeholder="e.g. Dashboard Air Vent 4-Cavity Mold"
+                  className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Compatible Machine *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={addForm.compatibleMachine}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, compatibleMachine: e.target.value })
+                    }
+                    placeholder="e.g. IMM-01 (Toshiba 180T)"
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Current Location *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={addForm.currentLocation}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, currentLocation: e.target.value })
+                    }
+                    placeholder="e.g. Tool Room Bay-1"
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-3.5 bg-[#f8fafc] border-t border-[#edf1f7] flex justify-end shrink-0">
-              <button
-                type="button"
-                onClick={() => setSelectedTool(null)}
-                className="px-5 py-2 rounded-xl border border-[#d6deeb] text-xs font-bold text-[#475569] hover:bg-white cursor-pointer"
-              >
-                Close Profile
-              </button>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Usage Count (Shots/Cycles)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={addForm.usageCount}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, usageCount: e.target.value })
+                    }
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Max Refurbishment Shots
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={addForm.maxRefurbShots}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, maxRefurbShots: e.target.value })
+                    }
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Last Maintenance Date
+                  </label>
+                  <input
+                    type="date"
+                    value={addForm.lastMaintenanceDate}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, lastMaintenanceDate: e.target.value })
+                    }
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#334155] mb-1.5">
+                    Next Refurbishment Date *
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={addForm.nextRefurbishmentDate}
+                    onChange={(e) =>
+                      setAddForm({ ...addForm, nextRefurbishmentDate: e.target.value })
+                    }
+                    className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#334155] mb-1.5">
+                  Tool Status
+                </label>
+                <select
+                  value={addForm.status}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, status: e.target.value })
+                  }
+                  className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-bold text-[#0f172a] focus:outline-none focus:border-[#0b57d0] cursor-pointer"
+                >
+                  <option value="In Tool Room">In Tool Room</option>
+                  <option value="In Press">In Press</option>
+                  <option value="Under Maintenance">Under Maintenance</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#334155] mb-1.5">
+                  Remarks (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={addForm.remarks}
+                  onChange={(e) =>
+                    setAddForm({ ...addForm, remarks: e.target.value })
+                  }
+                  placeholder="Enter maintenance notes or mold specifications..."
+                  className="w-full h-10 px-3 bg-[#f8fafc] border border-[#d6deeb] rounded-xl font-medium text-[#0f172a] focus:outline-none focus:border-[#0b57d0]"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2.5 border-t border-[#f1f5f9]">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-[#d6deeb] font-bold text-[#475569] hover:bg-[#f8fafc] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#0b57d0] hover:bg-[#0947ab] text-white font-bold shadow-[0_6px_16px_rgba(11,87,208,0.22)] cursor-pointer"
+                >
+                  Save Tool
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
+
     </div>
   );
 };

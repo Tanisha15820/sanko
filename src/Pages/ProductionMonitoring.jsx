@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Target,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  TrendingUp,
   Search,
   Eye,
   Calendar,
@@ -15,16 +10,6 @@ import {
   Cpu,
   Layers,
 } from 'lucide-react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from 'recharts';
 
 const productionRecords = [
   {
@@ -289,83 +274,6 @@ const ProductionMonitoring = () => {
     );
   });
 
-  // Dynamic Totals for Summary Cards
-  const totalTarget = filteredRecords.reduce((acc, r) => acc + r.targetOutput, 0);
-  const totalGood = filteredRecords.reduce((acc, r) => acc + r.actualGoodParts, 0);
-  const totalRejected = filteredRecords.reduce((acc, r) => acc + r.rejectedParts, 0);
-  const totalCycles = filteredRecords.reduce((acc, r) => acc + r.cycleCount, 0);
-  const overallAchievement =
-    totalTarget > 0 ? ((totalGood / totalTarget) * 100).toFixed(1) : '0.0';
-
-  const summaryCards = [
-    {
-      id: 1,
-      title: 'Total Target Production',
-      value: totalTarget.toLocaleString(),
-      support: 'Planned shift output (pcs)',
-      icon: Target,
-      iconBg: 'bg-[#eef4ff] text-[#0b57d0]',
-    },
-    {
-      id: 2,
-      title: 'Actual Good Parts',
-      value: totalGood.toLocaleString(),
-      support: 'QC passed molded parts',
-      icon: CheckCircle2,
-      iconBg: 'bg-[#e8f8ef] text-[#16a34a]',
-    },
-    {
-      id: 3,
-      title: 'Rejected Parts',
-      value: totalRejected.toLocaleString(),
-      support: `${
-        totalGood + totalRejected > 0
-          ? ((totalRejected / (totalGood + totalRejected)) * 100).toFixed(2)
-          : '0.00'
-      }% rejection rate`,
-      icon: XCircle,
-      iconBg: 'bg-[#feeceb] text-[#dc2626]',
-    },
-    {
-      id: 4,
-      title: 'Total Production Cycles',
-      value: totalCycles.toLocaleString(),
-      support: 'Cumulative molding shots',
-      icon: RefreshCw,
-      iconBg: 'bg-[#f3eefe] text-[#7c3aed]',
-    },
-    {
-      id: 5,
-      title: 'Production Achievement',
-      value: `${overallAchievement}%`,
-      support: 'Target vs Actual ratio',
-      icon: TrendingUp,
-      iconBg: 'bg-[#fff4e5] text-[#ea580c]',
-    },
-  ];
-
-  // Chart 1: Target vs Actual Good Parts by Machine (from filtered records)
-  const machineChartData = filteredRecords.map((r) => ({
-    name: r.machineId,
-    Target: r.targetOutput,
-    Actual: r.actualGoodParts,
-    Rejected: r.rejectedParts,
-  }));
-
-  // Chart 2: Shift-wise Production & Rejected Parts Comparison
-  const shiftComparisonData = ['Shift A', 'Shift B', 'Shift C'].map((shiftName) => {
-    const shiftRows = filteredRecords.filter((r) => r.shift === shiftName);
-    const targetSum = shiftRows.reduce((s, r) => s + r.targetOutput, 0);
-    const actualSum = shiftRows.reduce((s, r) => s + r.actualGoodParts, 0);
-    const rejectedSum = shiftRows.reduce((s, r) => s + r.rejectedParts, 0);
-    return {
-      shift: shiftName,
-      Target: targetSum,
-      Actual: actualSum,
-      Rejected: rejectedSum,
-    };
-  });
-
   const handleResetFilters = () => {
     setSelectedDate('2026-11-20');
     setSelectedShift('All Shifts');
@@ -376,38 +284,7 @@ const ProductionMonitoring = () => {
 
   return (
     <div className="space-y-5">
-      {/* 1. Five Summary KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[26px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
-      {/* 2. Production Filters Bar */}
+      {/* 1. Production Filters Bar */}
       <section className="bg-white rounded-2xl border border-[#edf1f7] p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)]">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1">
@@ -494,129 +371,7 @@ const ProductionMonitoring = () => {
         </div>
       </section>
 
-      {/* 3. Production Overview Charts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-        {/* Left Chart: Machine-wise Target vs Actual Good Parts (7 cols) */}
-        <section className="xl:col-span-7 bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
-            <div>
-              <h3 className="text-lg font-extrabold text-[#0f172a]">
-                Target Production vs Actual Good Parts
-              </h3>
-              <p className="text-xs font-medium text-[#64748b] mt-0.5">
-                Machine-wise output comparison for selected filters
-              </p>
-            </div>
-            <span className="px-3 py-1 rounded-full bg-[#eef4ff] text-[#0b57d0] text-xs font-bold self-start sm:self-auto">
-              Achievement: {overallAchievement}%
-            </span>
-          </div>
-
-          <div className="h-68 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={machineChartData}
-                margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
-                  axisLine={{ stroke: '#e2e8f0' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    borderColor: '#edf1f7',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px rgba(15,23,42,0.1)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 600 }} />
-                <Bar
-                  dataKey="Target"
-                  name="Target Output"
-                  fill="#cbd5e1"
-                  radius={[6, 6, 0, 0]}
-                />
-                <Bar
-                  dataKey="Actual"
-                  name="Actual Good Parts"
-                  fill="#0b57d0"
-                  radius={[6, 6, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-
-        {/* Right Chart: Shift Performance & Rejected Parts Comparison (5 cols) */}
-        <section className="xl:col-span-5 bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] p-6 flex flex-col justify-between">
-          <div className="mb-5">
-            <h3 className="text-lg font-extrabold text-[#0f172a]">
-              Shift Performance &amp; Rejected Parts
-            </h3>
-            <p className="text-xs font-medium text-[#64748b] mt-0.5">
-              Production output and scrap comparison across Shift A, Shift B, and Shift C
-            </p>
-          </div>
-
-          <div className="h-68 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={shiftComparisonData}
-                margin={{ top: 5, right: 10, left: -10, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis
-                  dataKey="shift"
-                  tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
-                  axisLine={{ stroke: '#e2e8f0' }}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    borderColor: '#edf1f7',
-                    borderRadius: '12px',
-                    boxShadow: '0 10px 25px rgba(15,23,42,0.1)',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '12px', fontWeight: 600 }} />
-                <Bar
-                  dataKey="Actual"
-                  name="Good Parts"
-                  fill="#16a34a"
-                  radius={[6, 6, 0, 0]}
-                />
-                <Bar
-                  dataKey="Rejected"
-                  name="Rejected Parts"
-                  fill="#dc2626"
-                  radius={[6, 6, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      </div>
-
-      {/* 4. Machine-wise Production Table */}
+      {/* 2. Machine-wise Production Table */}
       <section className="bg-white rounded-2xl border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] flex flex-col overflow-hidden">
         <div className="p-6 border-b border-[#f1f5f9] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -691,11 +446,10 @@ const ProductionMonitoring = () => {
                     </td>
                     <td className="py-3.5 px-5 whitespace-nowrap">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                          isHighRejection
-                            ? 'bg-[#feeceb] text-[#b91c1c]'
-                            : 'bg-[#f1f5f9] text-[#475569]'
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${isHighRejection
+                          ? 'bg-[#feeceb] text-[#b91c1c]'
+                          : 'bg-[#f1f5f9] text-[#475569]'
+                          }`}
                       >
                         {row.rejectedParts} pcs
                       </span>

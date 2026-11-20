@@ -14,11 +14,13 @@ const pageTitles = {
   '/breakdowns': 'Breakdown Management',
   '/machines/details': 'Machine Details',
   '/production': 'Production Monitoring',
+  '/production/plan': 'Production Plan',
   '/pm/calendar': 'PM Calendar',
   '/pm/checklist': 'PM Checklist',
   '/pm/history': 'PM History',
   '/inventory/spare-parts': 'Spare Parts Inventory',
   '/inventory/tools': 'Tool Management',
+  '/inventory/tools/details': 'Tool Details',
   '/notifications': 'Notifications',
   '/escalations': 'Escalation Management',
 };

@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
 import {
-  CheckCircle2,
-  Clock,
-  XCircle,
   Search,
   Eye,
   RotateCcw,
@@ -11,7 +8,6 @@ import {
   Camera,
   UserCheck,
   Package,
-  ShieldCheck,
 } from 'lucide-react';
 import sankoLogo from '../assets/images/sanko-logo.png';
 
@@ -76,47 +72,6 @@ const PMHistory = ({ pmHistory = [] }) => {
     );
   });
 
-  // Summary Counts
-  const totalCompleted = pmHistory.length;
-  const completedOnTime = pmHistory.filter((r) => r.status === 'Completed On Time').length;
-  const delayedCount = pmHistory.filter((r) => r.status === 'Delayed').length;
-  const failedInspections = pmHistory.filter((r) => r.inspectionResult !== 'All Passed').length;
-
-  const summaryCards = [
-    {
-      id: 1,
-      title: 'Total PM Completed',
-      value: String(totalCompleted),
-      support: 'Verified audit records',
-      icon: CheckCircle2,
-      iconBg: 'bg-[#eef4ff] text-[#0b57d0]',
-    },
-    {
-      id: 2,
-      title: 'Completed On Time',
-      value: String(completedOnTime),
-      support: 'Within scheduled window',
-      icon: ShieldCheck,
-      iconBg: 'bg-[#e8f8ef] text-[#16a34a]',
-    },
-    {
-      id: 3,
-      title: 'Delayed PM',
-      value: String(delayedCount),
-      support: 'Completed past due date',
-      icon: Clock,
-      iconBg: 'bg-[#fff4e5] text-[#ea580c]',
-    },
-    {
-      id: 4,
-      title: 'Failed Inspections',
-      value: String(failedInspections),
-      support: 'Flagged for corrective action',
-      icon: XCircle,
-      iconBg: 'bg-[#feeceb] text-[#dc2626]',
-    },
-  ];
-
   const handleResetFilters = () => {
     setDateFrom('2026-10-01');
     setDateTo('2026-11-30');
@@ -130,37 +85,6 @@ const PMHistory = ({ pmHistory = [] }) => {
 
   return (
     <div className="space-y-5">
-      {/* 4 Summary KPI Cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {summaryCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={card.id}
-              className="bg-white rounded-2xl p-4 sm:p-5 border border-[#edf1f7] shadow-[0_2px_12px_rgba(15,23,42,0.03)] hover:shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-all flex items-center gap-4"
-            >
-              <div
-                className={`w-12 h-12 rounded-2xl ${card.iconBg} flex items-center justify-center shrink-0`}
-              >
-                <Icon className="w-6 h-6" />
-              </div>
-
-              <div className="min-w-0">
-                <p className="text-[12.5px] font-semibold text-[#475569] truncate">
-                  {card.title}
-                </p>
-                <h3 className="text-2xl sm:text-[28px] font-extrabold text-[#0f172a] leading-tight mt-0.5 tracking-tight">
-                  {card.value}
-                </h3>
-                <p className="text-[11px] font-medium text-[#94a3b8] truncate mt-0.5">
-                  {card.support}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {/* Filters Section */}
       <section className="bg-white rounded-2xl border border-[#edf1f7] p-5 shadow-[0_2px_12px_rgba(15,23,42,0.03)]">
         <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
