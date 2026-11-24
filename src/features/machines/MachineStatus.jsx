@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const MachineStatus = () => {
   const navigate = useNavigate();
@@ -36,6 +38,16 @@ const MachineStatus = () => {
       machine.line.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedMachines,
+    setCurrentPage,
+  } = usePagination(filteredMachines, 10, `${searchQuery}|${statusFilter}`);
 
   const handleOpenMachineDetails = (machine) => {
     navigate(`/machines/details?id=${machine.id}`, { state: { machine } });
@@ -153,7 +165,7 @@ const MachineStatus = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13.5px]">
-              {filteredMachines.map((machine) => (
+              {paginatedMachines.map((machine) => (
                 <tr
                   key={machine.id}
                   onClick={() => handleOpenMachineDetails(machine)}
@@ -209,6 +221,15 @@ const MachineStatus = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       {/* Add Machine Popup Form Modal */}

@@ -20,6 +20,8 @@ import {
 } from './machineService';
 import { useMachines } from '../../context/MachineContext';
 import StatusBadge from '../../components/common/StatusBadge';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const buildMachineProfile = (item) => {
   const known = machineProfiles[item.id];
@@ -63,6 +65,12 @@ const MachineDetails = () => {
     (location.state?.machine ? buildMachineProfile(location.state.machine) : null) ||
     allProfiles[0] ||
     machineProfiles['IMM-01'];
+
+  const maintenancePagination = usePagination(
+    machineMaintenanceHistory,
+    10,
+    matchedProfile.id
+  );
   const selectedId = matchedProfile.id;
   const machine = matchedProfile;
 
@@ -318,7 +326,7 @@ const MachineDetails = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                {machineMaintenanceHistory.map((item) => (
+                {maintenancePagination.paginatedItems.map((item) => (
                   <tr key={item.id} className="hover:bg-[#f8fafc]/80 transition-colors">
                     <td className="py-3.5 px-5 font-semibold text-[#0f172a] whitespace-nowrap">
                       {item.date}
@@ -343,6 +351,15 @@ const MachineDetails = () => {
               </tbody>
             </table>
           </div>
+
+          <TablePagination
+            currentPage={maintenancePagination.currentPage}
+            totalPages={maintenancePagination.totalPages}
+            totalItems={maintenancePagination.totalItems}
+            startItem={maintenancePagination.startItem}
+            endItem={maintenancePagination.endItem}
+            onPageChange={maintenancePagination.setCurrentPage}
+          />
         </section>
 
         {/* Recent Breakdown History (5 cols) */}

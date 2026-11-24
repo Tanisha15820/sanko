@@ -11,6 +11,8 @@ import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import {
   PLAN_STATUSES,
   PLAN_STATUS_VARIANTS,
@@ -93,6 +95,20 @@ const ProductionPlan = () => {
       matchesStatus
     );
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedPlans,
+    setCurrentPage,
+  } = usePagination(
+    filteredPlans,
+    10,
+    `${activeRole}|${searchQuery}|${selectedDate}|${shiftFilter}|${lineFilter}|${statusFilter}`
+  );
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -338,7 +354,7 @@ const ProductionPlan = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {filteredPlans.map((plan) => (
+              {paginatedPlans.map((plan) => (
                 <tr key={plan.planId} className="hover:bg-[#f8fafc]/80 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-[#0b57d0] whitespace-nowrap">
                     {plan.planId}
@@ -414,6 +430,15 @@ const ProductionPlan = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       {/* Modal 1: Add / Edit Production Plan */}

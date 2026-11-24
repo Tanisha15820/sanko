@@ -18,6 +18,8 @@ import { useBreakdowns } from '../../context/BreakdownContext';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import {
   BREAKDOWN_STATUSES,
   BREAKDOWN_STATUS_VARIANTS,
@@ -122,6 +124,20 @@ const BreakdownManagement = () => {
       item.assignedEngineer.toLowerCase().includes(q);
     return matchesStatus && matchesPriority && matchesDate && matchesSearch;
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedBreakdowns,
+    setCurrentPage,
+  } = usePagination(
+    filteredBreakdowns,
+    10,
+    `${activeRole}|${searchQuery}|${statusFilter}|${priorityFilter}|${selectedDate}`
+  );
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -422,7 +438,7 @@ const BreakdownManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {filteredBreakdowns.map((item) => {
+              {paginatedBreakdowns.map((item) => {
                 const downtimeMins = calculateDowntimeMinutes(
                   item.breakdownStartTime,
                   item.actualRepairCompletionTime
@@ -556,6 +572,15 @@ const BreakdownManagement = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       {/* Modal 1: Report Breakdown Form (Technician & Production Engineer) */}

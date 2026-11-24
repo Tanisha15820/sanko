@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useTools } from '../../context/ToolContext';
 import StatusBadge from '../../components/common/StatusBadge';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const ToolDetails = () => {
   const navigate = useNavigate();
@@ -20,6 +22,13 @@ const ToolDetails = () => {
   const { tools, updateTool } = useTools();
   const selectedTool =
     tools.find((t) => t.toolId === toolIdParam) || tools[0] || null;
+
+  const maintenanceHistory = selectedTool?.maintenanceHistory || [];
+  const historyPagination = usePagination(
+    maintenanceHistory,
+    10,
+    selectedTool?.toolId || ''
+  );
 
   const [draft, setDraft] = useState({
     toolId: selectedTool?.toolId || null,
@@ -341,9 +350,8 @@ const ToolDetails = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {selectedTool.maintenanceHistory &&
-              selectedTool.maintenanceHistory.length > 0 ? (
-                selectedTool.maintenanceHistory.map((mh, i) => (
+              {historyPagination.paginatedItems.length > 0 ? (
+                historyPagination.paginatedItems.map((mh, i) => (
                   <tr key={i} className="hover:bg-[#f8fafc]/80 transition-colors">
                     <td className="py-3.5 px-5 font-semibold text-[#0f172a] whitespace-nowrap">
                       {mh.date}
@@ -370,6 +378,15 @@ const ToolDetails = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={historyPagination.currentPage}
+          totalPages={historyPagination.totalPages}
+          totalItems={historyPagination.totalItems}
+          startItem={historyPagination.startItem}
+          endItem={historyPagination.endItem}
+          onPageChange={historyPagination.setCurrentPage}
+        />
       </section>
     </div>
   );

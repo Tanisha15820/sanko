@@ -15,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import {
   TOOL_CATEGORIES,
   TOOL_CONDITIONS,
@@ -145,6 +147,18 @@ const ToolManagement = () => {
 
     return matchesSearch && matchesAction;
   });
+
+  const toolsPagination = usePagination(
+    filteredTools,
+    10,
+    `${activeRole}|${searchQuery}|${categoryFilter}|${statusFilter}|${onlyMyTools}`
+  );
+
+  const historyPagination = usePagination(
+    visibleHistory,
+    10,
+    `${activeRole}|${historySearch}|${historyActionFilter}`
+  );
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -545,7 +559,7 @@ const ToolManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                  {filteredTools.map((tool) => (
+                  {toolsPagination.paginatedItems.map((tool) => (
                     <tr
                       key={tool.toolId}
                       className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -644,6 +658,15 @@ const ToolManagement = () => {
                 </tbody>
               </table>
             </div>
+
+            <TablePagination
+              currentPage={toolsPagination.currentPage}
+              totalPages={toolsPagination.totalPages}
+              totalItems={toolsPagination.totalItems}
+              startItem={toolsPagination.startItem}
+              endItem={toolsPagination.endItem}
+              onPageChange={toolsPagination.setCurrentPage}
+            />
           </section>
         </>
       ) : (
@@ -701,7 +724,7 @@ const ToolManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                  {visibleHistory.map((item) => (
+                  {historyPagination.paginatedItems.map((item) => (
                     <tr
                       key={item.historyId}
                       className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -753,6 +776,15 @@ const ToolManagement = () => {
                 </tbody>
               </table>
             </div>
+
+            <TablePagination
+              currentPage={historyPagination.currentPage}
+              totalPages={historyPagination.totalPages}
+              totalItems={historyPagination.totalItems}
+              startItem={historyPagination.startItem}
+              endItem={historyPagination.endItem}
+              onPageChange={historyPagination.setCurrentPage}
+            />
           </section>
       )}
 

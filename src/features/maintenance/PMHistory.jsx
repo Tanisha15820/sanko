@@ -14,6 +14,8 @@ import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import sankoLogo from '../../assets/images/sanko-logo.png';
 
 const HISTORY_ROLES = ['Admin', 'Engineer', 'Technician'];
@@ -115,6 +117,20 @@ const PMHistory = () => {
       matchesSearch
     );
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedHistory,
+    setCurrentPage,
+  } = usePagination(
+    filteredHistory,
+    10,
+    `${activeRole}|${dateFrom}|${dateTo}|${machineFilter}|${technicianFilter}|${engineerFilter}|${resultFilter}|${statusFilter}|${searchQuery}`
+  );
 
   const handleResetFilters = () => {
     setDateFrom('');
@@ -310,7 +326,7 @@ const PMHistory = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {filteredHistory.map((rec) => (
+              {paginatedHistory.map((rec) => (
                 <tr
                   key={rec.pmId}
                   className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -383,6 +399,15 @@ const PMHistory = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       {/* View PM Report Modal */}

@@ -11,6 +11,8 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import {
   PRODUCTION_LINE_OPTIONS,
   SHIFT_OPTIONS,
@@ -101,6 +103,20 @@ const ProductionMonitoring = () => {
       matchesSearch
     );
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedRecords,
+    setCurrentPage,
+  } = usePagination(
+    filteredRecords,
+    10,
+    `${activeRole}|${selectedDate}|${selectedShift}|${selectedLine}|${selectedMachine}|${searchQuery}`
+  );
 
   const handleResetFilters = () => {
     setSelectedDate('2026-11-20');
@@ -348,7 +364,7 @@ const ProductionMonitoring = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {filteredRecords.map((row) => {
+              {paginatedRecords.map((row) => {
                 const goodQty = calculateGoodProduction(
                   row.actualProduction,
                   row.rejectedQuantity
@@ -471,6 +487,15 @@ const ProductionMonitoring = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       {/* Modal 1: Production Data Entry / Edit Modal */}

@@ -4,6 +4,8 @@ import { Eye, Calendar, RotateCcw, AlertTriangle, ShieldAlert } from 'lucide-rea
 import { useMaintenance } from '../../context/MaintenanceContext';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const getReviewDisplayStatus = (status) =>
   status === 'Closed' ? 'Closed' : 'Pending Admin Review';
@@ -47,6 +49,20 @@ const PMFailureReview = () => {
 
     return matchesSearch && matchesStatus && matchesFrom && matchesTo;
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedRecords,
+    setCurrentPage,
+  } = usePagination(
+    filteredRecords,
+    10,
+    `${searchQuery}|${statusFilter}|${fromDate}|${toDate}`
+  );
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -171,7 +187,7 @@ const PMFailureReview = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {filteredRecords.map((rec) => (
+              {paginatedRecords.map((rec) => (
                 <tr
                   key={rec.pmId}
                   className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -239,6 +255,15 @@ const PMFailureReview = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
     </div>
   );

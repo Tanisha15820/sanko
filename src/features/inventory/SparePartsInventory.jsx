@@ -15,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import {
   PART_CATEGORIES,
   UNIT_OPTIONS,
@@ -153,6 +155,18 @@ const SparePartsInventory = () => {
 
     return matchesSearch && matchesType;
   });
+
+  const partsPagination = usePagination(
+    filteredParts,
+    10,
+    `${activeRole}|${searchQuery}|${categoryFilter}|${statusFilter}`
+  );
+
+  const txnPagination = usePagination(
+    visibleTransactions,
+    10,
+    `${activeRole}|${txnSearch}|${txnTypeFilter}`
+  );
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -636,7 +650,7 @@ const SparePartsInventory = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                  {filteredParts.map((part) => (
+                  {partsPagination.paginatedItems.map((part) => (
                     <tr
                       key={part.partId}
                       className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -724,6 +738,15 @@ const SparePartsInventory = () => {
                 </tbody>
               </table>
             </div>
+
+            <TablePagination
+              currentPage={partsPagination.currentPage}
+              totalPages={partsPagination.totalPages}
+              totalItems={partsPagination.totalItems}
+              startItem={partsPagination.startItem}
+              endItem={partsPagination.endItem}
+              onPageChange={partsPagination.setCurrentPage}
+            />
           </section>
         </>
       ) : (
@@ -783,7 +806,7 @@ const SparePartsInventory = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                  {visibleTransactions.map((txn) => (
+                  {txnPagination.paginatedItems.map((txn) => (
                     <tr
                       key={txn.transactionId}
                       className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -840,6 +863,15 @@ const SparePartsInventory = () => {
                 </tbody>
               </table>
             </div>
+
+            <TablePagination
+              currentPage={txnPagination.currentPage}
+              totalPages={txnPagination.totalPages}
+              totalItems={txnPagination.totalItems}
+              startItem={txnPagination.startItem}
+              endItem={txnPagination.endItem}
+              onPageChange={txnPagination.setCurrentPage}
+            />
           </section>
       )}
 

@@ -13,6 +13,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useBreakdowns } from '../../context/BreakdownContext';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 import {
   calculateDowntimeMinutes,
   formatDowntime,
@@ -102,6 +104,18 @@ const RCAManagement = () => {
         !toDate || (row.submissionDate && row.submissionDate <= toDate);
       return matchesSearch && matchesStatus && matchesFrom && matchesTo;
     });
+
+  const adminPagination = usePagination(
+    adminRegisterRows,
+    10,
+    `${activeRole}|${searchQuery}|${statusFilter}|${fromDate}|${toDate}`
+  );
+
+  const engineerPagination = usePagination(
+    engineerActionPlans,
+    10,
+    `${activeRole}|${engSearch}|${engStatusFilter}`
+  );
 
   const handleResetAdminFilters = () => {
     setSearchQuery('');
@@ -247,7 +261,7 @@ const RCAManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                  {adminRegisterRows.map((row) => (
+                  {adminPagination.paginatedItems.map((row) => (
                     <tr
                       key={row.rcaId}
                       className="hover:bg-[#f8fafc]/80 transition-colors"
@@ -306,6 +320,15 @@ const RCAManagement = () => {
                 </tbody>
               </table>
             </div>
+
+            <TablePagination
+              currentPage={adminPagination.currentPage}
+              totalPages={adminPagination.totalPages}
+              totalItems={adminPagination.totalItems}
+              startItem={adminPagination.startItem}
+              endItem={adminPagination.endItem}
+              onPageChange={adminPagination.setCurrentPage}
+            />
           </section>
         </>
       ) : (
@@ -388,7 +411,7 @@ const RCAManagement = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-                  {engineerActionPlans.map((row) => {
+                  {engineerPagination.paginatedItems.map((row) => {
                     const isReadOnly =
                       row.rcaStatus === 'Pending Admin Review' ||
                       row.rcaStatus === 'Closed';
@@ -475,6 +498,15 @@ const RCAManagement = () => {
                 </tbody>
               </table>
             </div>
+
+            <TablePagination
+              currentPage={engineerPagination.currentPage}
+              totalPages={engineerPagination.totalPages}
+              totalItems={engineerPagination.totalItems}
+              startItem={engineerPagination.startItem}
+              endItem={engineerPagination.endItem}
+              onPageChange={engineerPagination.setCurrentPage}
+            />
           </section>
         </>
       )}

@@ -14,6 +14,8 @@ import { initialUsers, USER_ROLES, USER_DEPARTMENTS } from './userService';
 import Modal from '../../components/common/Modal';
 import StatusBadge from '../../components/common/StatusBadge';
 import SearchInput from '../../components/common/SearchInput';
+import TablePagination from '../../components/common/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const roleBadgeStyle = (role) => {
   switch (role) {
@@ -71,6 +73,20 @@ const UserManagement = () => {
 
     return matchesSearch && matchesRole && matchesStatus;
   });
+
+  const {
+    currentPage,
+    totalPages,
+    totalItems,
+    startItem,
+    endItem,
+    paginatedItems: paginatedUsers,
+    setCurrentPage,
+  } = usePagination(
+    filteredUsers,
+    10,
+    `${searchQuery}|${roleFilter}|${statusFilter}`
+  );
 
   const handleResetFilters = () => {
     setSearchQuery('');
@@ -312,7 +328,7 @@ const UserManagement = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f1f5f9] text-[13px]">
-              {filteredUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <tr key={user.employeeId} className="hover:bg-[#f8fafc]/80 transition-colors">
                   <td className="py-3.5 px-5 font-bold text-[#0b57d0] whitespace-nowrap">
                     {user.employeeId}
@@ -387,6 +403,15 @@ const UserManagement = () => {
             </tbody>
           </table>
         </div>
+
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          startItem={startItem}
+          endItem={endItem}
+          onPageChange={setCurrentPage}
+        />
       </section>
 
       {/* Modal 1: Add / Edit User Form */}

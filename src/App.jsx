@@ -1,13 +1,14 @@
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
+import { BASE_URL } from './config';
 import AppProviders from './context/AppProviders';
 import AppRoutes from './routes/AppRoutes';
 
 function App() {
   return (
     <AppProviders>
-      <Router>
+      <BrowserRouter basename={BASE_URL}>
         <AppRoutes />
-      </Router>
+      </BrowserRouter>
     </AppProviders>
   );
 }
