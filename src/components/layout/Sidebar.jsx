@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutGrid,
   Cpu,
@@ -20,6 +20,7 @@ import {
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
+  LogOut,
   X,
 } from 'lucide-react';
 import sankoLogo from '../../assets/images/sanko-logo.png';
@@ -140,7 +141,14 @@ const mainMenus = [
 
 const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen }) => {
   const location = useLocation();
-  const { hasPermission } = useAuth();
+  const navigate = useNavigate();
+  const { hasPermission, logout } = useAuth();
+
+  const handleLogout = () => {
+    setIsMobileOpen(false);
+    logout();
+    navigate('/login');
+  };
 
   const visibleMenus = mainMenus
     .map((menu) => {
@@ -405,6 +413,21 @@ const Sidebar = ({ isCollapsed, setIsCollapsed, isMobileOpen, setIsMobileOpen })
               );
             })}
           </ul>
+        </div>
+
+        {/* Bottom Logout Section */}
+        <div className="p-3.5 border-t border-[#f1f5f9] shrink-0">
+          <button
+            type="button"
+            onClick={handleLogout}
+            title={isCollapsed ? 'Logout' : ''}
+            className={`w-full group flex items-center gap-3.5 px-3.5 py-2.5 rounded-xl text-[13.5px] font-semibold text-red-600 hover:bg-red-50 transition-all cursor-pointer ${
+              isCollapsed ? 'justify-center' : ''
+            }`}
+          >
+            <LogOut className="w-[18px] h-[18px] shrink-0" />
+            {!isCollapsed && <span className="truncate">Logout</span>}
+          </button>
         </div>
       </aside>
     </>
